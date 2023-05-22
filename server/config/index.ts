@@ -4,11 +4,12 @@ const config: PluginConfig = {
   acceptedNodeEnvs: ["development"],
   commonInterfacesFolderName: "common",
   componentInterfacesFolderName: "interfaces",
+  verboseLogs: false,
 };
 
 export default {
   default: config,
-  validator(acceptedNodeEnvs: string[]) {
-    console.log('acceptedNodeEnvs', acceptedNodeEnvs);
+  validator(config: PluginConfig) {
+    console.log('config', config);
   }
 };

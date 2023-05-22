@@ -13,20 +13,22 @@ export class Converter {
   private static componentInterfacesFolderName: string = '';
   private static usePrettier = false;
   private static prettierOptions: prettier.Options = {};
+  private static verboseLogs: boolean;
 
   public static SchemasToTs(config: PluginConfig): void {
     const currentNodeEnv: string = process.env.NODE_ENV ?? '';
+
     const acceptedNodeEnvs = config.acceptedNodeEnvs ?? [];
     if (!acceptedNodeEnvs.includes(currentNodeEnv)) {
       console.log(`${pluginName} plugin's acceptedNodeEnvs property does not include '${currentNodeEnv}' environment. Skipping conversion of schemas to Typescript.`);
       return;
     }
 
+    this.verboseLogs = config.verboseLogs;
     this.componentInterfacesFolderName = config.componentInterfacesFolderName;
+    this.setCommonInterfacesFolder(config);
 
     this.configurePrettier();
-
-    this.setCommonInterfacesFolder(config);
 
     const commonSchemas: SchemaInfo[] = this.generateCommonSchemas();
     const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
