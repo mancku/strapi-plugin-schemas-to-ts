@@ -10,8 +10,8 @@ import { pluginName } from '../register';
 
 export class Converter {
   private static commonFolderModelsPath: string = '';
-  private static componentsFolderModelsPath: string = '';
-  
+  private static componentInterfacesFolderName: string = '';
+
   public static SchemasToTs(config: PluginConfig): void {
     const currentNodeEnv: string = process.env.NODE_ENV ?? '';
     const acceptedNodeEnvs = config.acceptedNodeEnvs ?? [];
@@ -19,6 +19,8 @@ export class Converter {
       console.log(`${pluginName} plugin's acceptedNodeEnvs property does not include '${currentNodeEnv}' environment. Skipping conversion of schemas to Typescript.`);
       return;
     }
+
+    this.componentInterfacesFolderName = config.componentInterfacesFolderName;
 
     let usePrettier = false;
     let prettierOptions: prettier.Options = {};
@@ -29,7 +31,6 @@ export class Converter {
     }
 
     this.setCommonInterfacesFolder(config);
-    this.setComponentsInterfacesFolder(config);
 
     const commonSchemas: SchemaInfo[] = this.generateCommonSchemas();
     const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
@@ -53,7 +54,7 @@ export class Converter {
         folderPath = this.commonFolderModelsPath;
         break;
       case SchemaSource.Component:
-        folderPath = this.componentsFolderModelsPath;
+        folderPath = schema.destinationFolder;
         break;
       case SchemaSource.Api:
       default:
@@ -108,11 +109,6 @@ export class Converter {
 
   private static setCommonInterfacesFolder(config: PluginConfig) {
     this.commonFolderModelsPath = this.ensureFolderPathExistRecursive(config.commonInterfacesFolderName, pluginName);
-  }
-
-  private static setComponentsInterfacesFolder(config: PluginConfig) {
-    // this.componentsFolderModelsPath = this.ensureFolderPathExistRecursive('components', config.componentInterfacesFolderName);
-    this.componentsFolderModelsPath = this.ensureFolderPathExistRecursive(`components-${config.componentInterfacesFolderName}`);
   }
 
   private static ensureFolderPathExistRecursive(...subfolders: string[]): string {
@@ -218,7 +214,10 @@ export class Converter {
         break;
       case SchemaSource.Component:
         interfaceName = schema.info.displayName;
-        folder = this.componentsFolderModelsPath;
+        folder = path.join(path.dirname(file), this.componentInterfacesFolderName);
+        if (!this.folderExists(folder)) {
+          fs.mkdirSync(folder);
+        }
         break;
     }
 
