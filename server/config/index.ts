@@ -10,6 +10,5 @@ const config: PluginConfig = {
 export default {
   default: config,
   validator(config: PluginConfig) {
-    console.log('config', config);
   }
 };
