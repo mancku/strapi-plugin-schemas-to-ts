@@ -1,7 +1,7 @@
 import { SchemaSource } from "./schemaSource";
 
 export interface SchemaInfo {
-  path: string;
+  schemaPath: string;
   destinationFolder: string;
   schema: any;
   pascalName: string;
@@ -10,7 +10,7 @@ export interface SchemaInfo {
   plainInterfaceAsText: string;
   noRelationsInterfaceAsText: string;
   adminPanelLifeCycleRelationsInterfaceAsText: string;
-  imports: string[];
+  dependencies: string[];
 }
 
 const defaultSchemaInfo: SchemaInfo = {
@@ -18,12 +18,12 @@ const defaultSchemaInfo: SchemaInfo = {
   interfaceAsText: '',
   pascalName: '',
   source: SchemaSource.Common,
-  path: '',
+  schemaPath: '',
   plainInterfaceAsText: '',
   noRelationsInterfaceAsText: '',
   adminPanelLifeCycleRelationsInterfaceAsText: '',
   schema: undefined,
-  imports: [],
+  dependencies: [],
 };
 
 export default defaultSchemaInfo;
