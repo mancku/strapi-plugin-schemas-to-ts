@@ -219,7 +219,8 @@ export class Converter {
         folder = this.commonFolderModelsPath;
         break;
       case SchemaSource.Component:
-        interfaceName = schema.info.displayName;
+        let fileNameWithoutExtension = path.basename(file, path.extname(file));
+        interfaceName = pascalCase(fileNameWithoutExtension);
         folder = path.join(path.dirname(file), this.componentInterfacesFolderName);
         if (!this.folderExists(folder)) {
           fs.mkdirSync(folder);
