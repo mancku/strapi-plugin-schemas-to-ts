@@ -1,183 +1,60 @@
 import fs from 'fs';
 import { pascalCase } from "pascal-case";
 import path from 'path';
-import prettier from 'prettier';
 import { PluginConfig } from '../models/pluginConfig';
-import defaultSchemaInfo, { SchemaInfo } from "../models/schemaInfo";
+import { SchemaInfo } from "../models/schemaInfo";
 import { SchemaSource } from '../models/schemaSource';
-import { SchemaType } from '../models/schemaType';
 import { pluginName } from '../register';
+import { CommonHelpers } from './commonHelpers';
+import { FileHelpers } from './fileHelpers';
+import { InterfaceBuilder } from './interfaceBuilder';
 
 export class Converter {
-  private static commonFolderModelsPath: string = '';
-  private static componentInterfacesFolderName: string = '';
-  private static usePrettier = false;
-  private static prettierOptions: prettier.Options = {};
-  private static verboseLogs: boolean;
+  private commonFolderModelsPath: string = '';
+  private componentInterfacesFolderName: string = '';
+  private readonly commonHelpers: CommonHelpers;
+  private readonly interfaceBuilder: InterfaceBuilder;
+  private readonly config: PluginConfig;
 
-  public static SchemasToTs(config: PluginConfig): void {
-    this.verboseLogs = config.verboseLogs;
-    this.printVerboseLog(`${pluginName} configuration`, config);
+  constructor(config: PluginConfig) {
+    this.config = config;
+    this.commonHelpers = new CommonHelpers(config);
+    this.interfaceBuilder = new InterfaceBuilder(this.commonHelpers);
+    this.commonHelpers.printVerboseLog(`${pluginName} configuration`, this.config);
+  }
 
+  public SchemasToTs(): void {
     const currentNodeEnv: string = process.env.NODE_ENV ?? '';
-    const acceptedNodeEnvs = config.acceptedNodeEnvs ?? [];
+    const acceptedNodeEnvs = this.config.acceptedNodeEnvs ?? [];
     if (!acceptedNodeEnvs.includes(currentNodeEnv)) {
       console.log(`${pluginName} plugin's acceptedNodeEnvs property does not include '${currentNodeEnv}' environment. Skipping conversion of schemas to Typescript.`);
       return;
     }
 
-    this.componentInterfacesFolderName = config.componentInterfacesFolderName;
-    this.setCommonInterfacesFolder(config);
+    this.componentInterfacesFolderName = this.config.componentInterfacesFolderName;
+    this.setCommonInterfacesFolder(this.config);
 
-    this.configurePrettier();
-
-    const commonSchemas: SchemaInfo[] = this.generateCommonSchemas();
+    const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
     const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
     const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component);
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];
     for (const schema of schemas.filter(x => x.source !== SchemaSource.Common)) {
-      this.convertSchemaToInterfaces(schema, schemas);
+      this.interfaceBuilder.convertSchemaToInterfaces(schema, schemas);
     }
 
     for (const schema of schemas) {
-      this.writeInterfacesFile(schema, this.usePrettier, this.prettierOptions);
+      this.writeInterfacesFile(schema);
     }
   }
 
-  private static configurePrettier() {
-    const prettierConfigFile = prettier.resolveConfigFile.sync(strapi.dirs.app.root);
-    if (prettierConfigFile !== null) {
-      this.prettierOptions = prettier.resolveConfig.sync(prettierConfigFile, { editorconfig: true }) as prettier.Options;
-      this.usePrettier = true;
-    }
+  private setCommonInterfacesFolder(config: PluginConfig) {
+    this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive(config.commonInterfacesFolderName, pluginName);
   }
 
-  private static writeInterfacesFile(schema: SchemaInfo, usePrettier: boolean, prettierOptions: prettier.Options) {
-    const interfacesFileContent = this.buildInterfacesFileContent(schema, usePrettier, prettierOptions);
-    const fileName: string = this.getFileName(schema, true);
-    let folderPath: string = '';
-    switch (schema.source) {
-      case SchemaSource.Common:
-        folderPath = this.commonFolderModelsPath;
-        break;
-      case SchemaSource.Component:
-        folderPath = schema.destinationFolder;
-        break;
-      case SchemaSource.Api:
-      default:
-        folderPath = schema.destinationFolder;
-        break;
-    }
-
-    let writeFile = true;
-    const destinationPath: string = path.join(folderPath, fileName);
-    if (this.fileExists(destinationPath)) {
-      const fileContent: string = fs.readFileSync(destinationPath, 'utf8');
-      if (fileContent === interfacesFileContent) {
-        console.log(`File ${destinationPath} is up to date.`);
-        writeFile = false;
-      }
-    }
-    if (writeFile) {
-      console.log(`Writing file ${destinationPath}`);
-      fs.writeFileSync(destinationPath, interfacesFileContent, 'utf8');
-    }
-  }
-
-  private static buildInterfacesFileContent(schema: SchemaInfo, usePrettier: boolean, prettierOptions: prettier.Options) {
-    let interfacesFileContent = `// Interface automatically generated by ${pluginName}\n\n`;
-    if (schema.dependencies?.length > 0) {
-      interfacesFileContent += schema.dependencies.join('\n');
-      interfacesFileContent += '\n\n';
-    }
-    let interfacesText = schema.interfaceAsText;
-    interfacesText += `\n${schema.plainInterfaceAsText}`;
-    interfacesText += `\n${schema.noRelationsInterfaceAsText}`;
-    interfacesText += `\n${schema.adminPanelLifeCycleRelationsInterfaceAsText}`;
-    interfacesText = interfacesText.replace('\n\n', '\n');
-    interfacesFileContent += interfacesText;
-
-    if (!!usePrettier) {
-      interfacesFileContent = prettier.format(interfacesFileContent, prettierOptions);
-    }
-    return interfacesFileContent;
-  }
-
-  private static convertSchemaToInterfaces(schema: SchemaInfo, schemas: SchemaInfo[]) {
-    console.log('Converting schema', schema.schemaPath);
-    this.convertToInterface(schema, schemas, SchemaType.Standard);
-    this.convertToInterface(schema, schemas, SchemaType.Plain);
-    this.convertToInterface(schema, schemas, SchemaType.NoRelations);
-    if (schema.source === SchemaSource.Api) {
-      this.convertToInterface(schema, schemas, SchemaType.AdminPanelLifeCycle);
-    }
-    schema.dependencies = [...new Set(schema.dependencies)];
-  }
-
-  private static setCommonInterfacesFolder(config: PluginConfig) {
-    this.commonFolderModelsPath = this.ensureFolderPathExistRecursive(config.commonInterfacesFolderName, pluginName);
-  }
-
-  private static ensureFolderPathExistRecursive(...subfolders: string[]): string {
-    let folder = strapi.dirs.app.src;
-    for (const subfolder of subfolders) {
-      folder = path.join(folder, subfolder);
-      if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder);
-      }
-    }
-
-    return folder;
-  }
-
-  private static folderExists(folderPath: string): boolean {
-    try {
-      return fs.statSync(folderPath).isDirectory();
-    } catch (err) {
-      return false;
-    }
-  }
-
-  private static fileExists(filePath: string): boolean {
-    try {
-      return fs.statSync(filePath).isFile();
-    } catch {
-      return false;
-    }
-  }
-
-  private static getFileName(schemaInfo: SchemaInfo, withExtension: boolean): string {
-    let fileName: string = schemaInfo.source === SchemaSource.Api
-      ? schemaInfo.schema.info.singularName
-      : schemaInfo.pascalName;
-
-    if (!!withExtension) {
-      fileName += '.ts';
-    }
-
-    return fileName;
-  }
-
-  private static getRelativePath(fromPath: string, toPath: string): string {
-    let stat = fs.statSync(fromPath);
-    if (stat.isDirectory()) {
-      // path.relative works better with file paths, so we add an unexisting file to the route
-      fromPath += '/.dumbFile.txt';
-    }
-
-    stat = fs.statSync(toPath);
-    if (stat.isDirectory()) {
-      toPath += '/.dumbFile.txt';
-    }
-
-    const relativePath = path.relative(path.dirname(fromPath), path.dirname(toPath));
-    return relativePath === '' ? './' : relativePath;
-  }
-
-  private static getSchemas(folderPath: string, schemaType: SchemaSource): SchemaInfo[] {
+  private getSchemas(folderPath: string, schemaType: SchemaSource): SchemaInfo[] {
     const files: string[] = [];
 
-    if (this.folderExists(folderPath)) {
+    if (FileHelpers.folderExists(folderPath)) {
       const readFolder = (folderPath: string) => {
         const items = fs.readdirSync(folderPath);
         for (const item of items) {
@@ -199,7 +76,7 @@ export class Converter {
       .map((file: string) => this.parseSchema(file, schemaType));
   }
 
-  private static parseSchema(file: string, schemaType: SchemaSource): SchemaInfo {
+  private parseSchema(file: string, schemaType: SchemaSource): SchemaInfo {
     let schema: any = undefined;
     try {
       schema = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -223,7 +100,7 @@ export class Converter {
         let fileNameWithoutExtension = path.basename(file, path.extname(file));
         interfaceName = pascalCase(fileNameWithoutExtension);
         folder = path.join(path.dirname(file), this.componentInterfacesFolderName);
-        if (!this.folderExists(folder)) {
+        if (!FileHelpers.folderExists(folder)) {
           fs.mkdirSync(folder);
         }
         break;
@@ -243,413 +120,23 @@ export class Converter {
     };
   }
 
-  private static isOptional(attributeValue): boolean {
-    // arrays are never null
-    if (attributeValue.relation === 'oneToMany' || attributeValue.repeatable) {
-      return false;
+  private writeInterfacesFile(schema: SchemaInfo) {
+    const interfacesFileContent = this.interfaceBuilder.buildInterfacesFileContent(schema);
+    const fileName: string = this.commonHelpers.getFileNameFromSchema(schema, true);
+    let folderPath: string = '';
+    switch (schema.source) {
+      case SchemaSource.Common:
+        folderPath = this.commonFolderModelsPath;
+        break;
+      case SchemaSource.Component:
+        folderPath = schema.destinationFolder;
+        break;
+      case SchemaSource.Api:
+      default:
+        folderPath = schema.destinationFolder;
+        break;
     }
-    return attributeValue.required !== true;
+
+    FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent);
   }
-
-  private static convertToInterface(schemaInfo: SchemaInfo, allSchemas: SchemaInfo[], schemaType: SchemaType) {
-    if (!schemaInfo.schema) {
-      console.log(`Skipping ${schemaInfo.schemaPath}: schema is empty.`);
-      return null;
-    }
-
-    const interfaceDependencies: any[] = [];
-    let interfaceText = this.buildInterfaceText(schemaInfo, schemaType, interfaceDependencies);
-
-    for (const dependency of interfaceDependencies) {
-      const dependencySchemaInfo = allSchemas.find((x: SchemaInfo) => {
-        return x.pascalName === dependency.type.replace('_Plain', '').replace('_NoRelations', '');
-      });
-
-      let importPath = schemaInfo.destinationFolder;
-      if (dependencySchemaInfo) {
-        importPath = this.getRelativePath(importPath, dependencySchemaInfo.destinationFolder);
-        const fileName: string = this.getFileName(dependencySchemaInfo, false);
-        importPath = this.getImportPath(importPath, fileName);
-      }
-      const dependencyImport: string = `import { ${dependency.type} } from '${importPath}';`;
-      this.printVerboseLog(`Adding dependency to ${schemaInfo.pascalName}`, dependencyImport);
-      schemaInfo.dependencies.push(dependencyImport);
-    }
-
-    if (schemaType === SchemaType.Standard) {
-      schemaInfo.interfaceAsText = interfaceText;
-    } else if (schemaType === SchemaType.Plain) {
-      schemaInfo.plainInterfaceAsText = interfaceText;
-    } else if (schemaType === SchemaType.NoRelations) {
-      schemaInfo.noRelationsInterfaceAsText = interfaceText;
-    } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-      schemaInfo.adminPanelLifeCycleRelationsInterfaceAsText = interfaceText;
-    }
-  }
-
-  private static buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType, interfaceDependencies: any[]) {
-    let interfaceName: string = schemaInfo.pascalName;
-    if (schemaType === SchemaType.Plain) {
-      interfaceName += '_Plain';
-    } else if (schemaType === SchemaType.NoRelations) {
-      interfaceName += '_NoRelations';
-    } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-      interfaceName += '_AdminPanelLifeCycle';
-    }
-
-    let interfaceText = `export interface ${interfaceName} {\n`;
-    if (schemaInfo.source === SchemaSource.Api) {
-      interfaceText += `  id: number;\n`;
-    }
-
-    let indentation = '  ';
-    if (schemaInfo.source === SchemaSource.Api && schemaType === SchemaType.Standard) {
-      interfaceText += `  attributes: {\n`;
-      indentation += '  ';
-    }
-
-    const attributes = Object.entries(schemaInfo.schema.attributes);
-    for (const attribute of attributes) {
-      let propertyName = attribute[0];
-      const attributeValue: any = attribute[1];
-      if (this.isOptional(attributeValue))
-        propertyName += '?';
-      let propertyType;
-      let propertyDefinition;
-      // -------------------------------------------------
-      // Relation
-      // -------------------------------------------------
-      if (attributeValue.type === 'relation') {
-        propertyType = attributeValue.target.includes('::user')
-          ? 'User'
-          : `${pascalCase(attributeValue.target.split('.')[1])}`;
-
-        if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyType += '_Plain';
-        }
-
-        interfaceDependencies.push({
-          type: propertyType,
-        });
-        const isArray = attributeValue.relation.endsWith('ToMany');
-        const bracketsIfArray = isArray ? '[]' : '';
-
-        //TODO review if this should be that way
-        if (schemaType === SchemaType.Standard) {
-          propertyDefinition = `${indentation}${propertyName}: { data: ${propertyType}${bracketsIfArray} };\n`;
-        } else if (schemaType === SchemaType.Plain) {
-          propertyDefinition = `${indentation}${propertyName}: ${propertyType}${bracketsIfArray};\n`;
-        } else if (schemaType === SchemaType.NoRelations) {
-          propertyDefinition = `${indentation}${propertyName}: number${bracketsIfArray};\n`;
-        } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyDefinition = `${indentation}${propertyName}: AdminPanelRelationPropertyModification<${propertyType}>${bracketsIfArray};\n`;
-          interfaceDependencies.push({
-            type: 'AdminPanelRelationPropertyModification',
-          });
-        }
-      }
-
-
-
-      // -------------------------------------------------
-      // Component
-      // -------------------------------------------------
-      else if (attributeValue.type === 'component') {
-        propertyType =
-          attributeValue.target === 'plugin::users-permissions.user'
-            ? 'User'
-            : pascalCase(attributeValue.component.split('.')[1]);
-
-        if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyType += '_Plain';
-        }
-        if (schemaType === SchemaType.NoRelations) {
-          propertyType += '_NoRelations';
-        }
-        interfaceDependencies.push({
-          type: propertyType,
-        });
-        const isArray = attributeValue.repeatable;
-        const bracketsIfArray = isArray ? '[]' : '';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType}${bracketsIfArray};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Dynamic zone
-      // -------------------------------------------------
-      else if (attributeValue.type === 'dynamiczone') {
-        // TODO
-        propertyType = 'any';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Media
-      // -------------------------------------------------
-      else if (attributeValue.type === 'media') {
-        propertyType = 'Media';
-        interfaceDependencies.push({
-          type: propertyType,
-        });
-
-        const bracketsIfArray = attributeValue.multiple ? '[]' : '';
-        if (schemaType === SchemaType.Standard) {
-          propertyDefinition = `${indentation}${propertyName}: { data: ${propertyType}${bracketsIfArray} };\n`;
-        } else if (schemaType === SchemaType.Plain) {
-          propertyDefinition = `${indentation}${propertyName}: ${propertyType}${bracketsIfArray};\n`;
-        } else if (schemaType === SchemaType.NoRelations) {
-          propertyDefinition = `${indentation}${propertyName}: number${bracketsIfArray};\n`;
-        } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyDefinition = `${indentation}${propertyName}: AdminPanelRelationPropertyModification<${propertyType}>${bracketsIfArray};\n`;
-
-          interfaceDependencies.push({
-            type: 'AdminPanelRelationPropertyModification',
-          });
-        }
-      }
-
-
-
-      // -------------------------------------------------
-      // Enumeration
-      // -------------------------------------------------
-      else if (attributeValue.type === 'enumeration') {
-        const enumOptions = attributeValue.enum.map(v => `'${v}'`).join(' | ');
-        propertyDefinition = `${indentation}${propertyName}: ${enumOptions};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Text, RichText, Email, UID
-      // -------------------------------------------------
-      else if (attributeValue.type === 'string' ||
-        attributeValue.type === 'text' ||
-        attributeValue.type === 'richtext' ||
-        attributeValue.type === 'email' ||
-        attributeValue.type === 'password' ||
-        attributeValue.type === 'uid') {
-        propertyType = 'string';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Json
-      // -------------------------------------------------
-      else if (attributeValue.type === 'json') {
-        propertyType = 'any';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Password
-      // -------------------------------------------------
-      else if (attributeValue.type === 'password') {
-        propertyDefinition = '';
-      }
-
-
-
-      // -------------------------------------------------
-      // Number
-      // -------------------------------------------------
-      else if (attributeValue.type === 'integer' ||
-        attributeValue.type === 'biginteger' ||
-        attributeValue.type === 'decimal' ||
-        attributeValue.type === 'float') {
-        propertyType = 'number';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Date
-      // -------------------------------------------------
-      else if (attributeValue.type === 'date' || attributeValue.type === 'datetime' || attributeValue.type === 'time') {
-        propertyType = 'Date';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Boolean
-      // -------------------------------------------------
-      else if (attributeValue.type === 'boolean') {
-        propertyType = 'boolean';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType};\n`;
-      }
-
-
-
-      // -------------------------------------------------
-      // Others
-      // -------------------------------------------------
-      else {
-        propertyType = 'any';
-        propertyDefinition = `${indentation}${propertyName}: ${propertyType};\n`;
-      }
-      interfaceText += propertyDefinition;
-    }
-    // -------------------------------------------------
-    // Localization
-    // -------------------------------------------------
-    if (schemaInfo.schema.pluginOptions?.i18n?.localized) {
-      interfaceText += `${indentation}locale: string;\n`;
-      if (schemaType === SchemaType.Standard) {
-        interfaceText += `${indentation}localizations?: { data: ${schemaInfo.pascalName}[] };\n`;
-      } else {
-        interfaceText += `${indentation}localizations?: ${schemaInfo.pascalName}[];\n`;
-      }
-    }
-    if (schemaInfo.source === SchemaSource.Api && schemaType === SchemaType.Standard) {
-      interfaceText += `  };\n`;
-    }
-
-    interfaceText += '}\n';
-    return interfaceText;
-  }
-
-  private static getImportPath(importPath: string, fileName: string): string {
-    let result = '';
-    if (importPath === './') {
-      result = `./${fileName}`;
-    } else {
-      result = path.join(importPath, fileName);
-    }
-
-    if (this.isWindows()) {
-      result = result.replaceAll('\\', '/');
-    }
-
-    return result;
-  }
-
-  private static isWindows() {
-    return process.platform === 'win32';
-  }
-
-  private static generateCommonSchemas(): SchemaInfo[] {
-    const result: SchemaInfo[] = [];
-    this.addCommonSchema(result, 'Payload', `export interface Payload<T> {
-      data: T;
-      meta: {
-        pagination?: {
-          page: number;
-          pageSize: number;
-          pageCount: number;
-          total: number;
-        }
-      };
-    }
-    `);
-
-    this.addCommonSchema(result, 'User', `export interface User {
-      id: number;
-      attributes: {
-        username: string;
-        email: string;
-        provider: string;
-        confirmed: boolean;
-        blocked: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-      }
-    }
-    `, `export interface User_Plain {
-      id: number;
-      username: string;
-      email: string;
-      provider: string;
-      confirmed: boolean;
-      blocked: boolean;
-      createdAt: Date;
-      updatedAt: Date;
-    }
-    `);
-
-    this.addCommonSchema(result, 'MediaFormat', `export interface MediaFormat {
-      name: string;
-      hash: string;
-      ext: string;
-      mime: string;
-      width: number;
-      height: number;
-      size: number;
-      path: string;
-      url: string;
-    }
-    `);
-
-    this.addCommonSchema(result, 'Media', `import { MediaFormat } from './MediaFormat';
-    export interface Media {
-      id: number;
-      attributes: {
-        name: string;
-        alternativeText: string;
-        caption: string;
-        width: number;
-        height: number;
-        formats: { thumbnail: MediaFormat; medium: MediaFormat; small: MediaFormat; };
-        hash: string;
-        ext: string;
-        mime: string;
-        size: number;
-        url: string;
-        previewUrl: string;
-        provider: string;
-        createdAt: Date;
-        updatedAt: Date;
-      }
-    }
-    `);
-
-    this.addCommonSchema(result, 'AdminPanelRelationPropertyModification', `export interface AdminPanelRelationPropertyModification<T> {
-      connect: T[];
-      disconnect: T[];
-    }
-    `);
-
-    this.addCommonSchema(result, 'BeforeRunEvent', `import { Event } from '@strapi/database/lib/lifecycles/index';
-  
-    export interface BeforeRunEvent<TState> extends Event {
-      state: TState;
-    }`);
-
-    this.addCommonSchema(result, 'AfterRunEvent', `import { BeforeRunEvent } from './BeforeRunEvent';
-  
-    export interface AfterRunEvent<TState, TResult> extends BeforeRunEvent<TState> {
-      result: TResult;
-    }
-    `);
-
-    return result;
-  }
-
-  private static addCommonSchema(schemas: SchemaInfo[], pascalName: string, interfaceAsText: string, plainInterfaceAsText?: string): void {
-    const schemaInfo: SchemaInfo = Object.assign({}, defaultSchemaInfo);
-    schemaInfo.destinationFolder = this.commonFolderModelsPath;
-    schemaInfo.pascalName = pascalName;
-    schemaInfo.interfaceAsText = interfaceAsText;
-    if (plainInterfaceAsText) {
-      schemaInfo.plainInterfaceAsText = plainInterfaceAsText;
-    }
-    schemas.push(schemaInfo);
-  }
-
-  private static printVerboseLog(message: any, ...optionalParams: any[]): void {
-    if (!!this.verboseLogs) {
-      console.log(message, optionalParams);
-    }
-  }
-
 }
