@@ -3,7 +3,10 @@
 
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "lib": [
+      "ES2021.String"
+    ]
   },
 
   "include": [

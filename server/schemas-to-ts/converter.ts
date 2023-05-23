@@ -16,15 +16,16 @@ export class Converter {
   private static verboseLogs: boolean;
 
   public static SchemasToTs(config: PluginConfig): void {
-    const currentNodeEnv: string = process.env.NODE_ENV ?? '';
+    this.verboseLogs = config.verboseLogs;
+    this.printVerboseLog(`${pluginName} configuration`, config);
 
+    const currentNodeEnv: string = process.env.NODE_ENV ?? '';
     const acceptedNodeEnvs = config.acceptedNodeEnvs ?? [];
     if (!acceptedNodeEnvs.includes(currentNodeEnv)) {
       console.log(`${pluginName} plugin's acceptedNodeEnvs property does not include '${currentNodeEnv}' environment. Skipping conversion of schemas to Typescript.`);
       return;
     }
 
-    this.verboseLogs = config.verboseLogs;
     this.componentInterfacesFolderName = config.componentInterfacesFolderName;
     this.setCommonInterfacesFolder(config);
 
@@ -270,7 +271,9 @@ export class Converter {
         const fileName: string = this.getFileName(dependencySchemaInfo, false);
         importPath = this.getImportPath(importPath, fileName);
       }
-      schemaInfo.dependencies.push(`import { ${dependency.type} } from '${importPath}';`);
+      const dependencyImport: string = `import { ${dependency.type} } from '${importPath}';`;
+      this.printVerboseLog(`Adding dependency to ${schemaInfo.pascalName}`, dependencyImport);
+      schemaInfo.dependencies.push(dependencyImport);
     }
 
     if (schemaType === SchemaType.Standard) {
@@ -525,7 +528,7 @@ export class Converter {
     }
 
     if (this.isWindows()) {
-      result = result.replace('/', '\\');
+      result = result.replaceAll('\\', '/');
     }
 
     return result;
@@ -641,6 +644,12 @@ export class Converter {
       schemaInfo.plainInterfaceAsText = plainInterfaceAsText;
     }
     schemas.push(schemaInfo);
+  }
+
+  private static printVerboseLog(message: any, ...optionalParams: any[]): void {
+    if (!!this.verboseLogs) {
+      console.log(message, optionalParams);
+    }
   }
 
 }
