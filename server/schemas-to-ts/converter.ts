@@ -10,8 +10,8 @@ import { FileHelpers } from './fileHelpers';
 import { InterfaceBuilder } from './interfaceBuilder';
 
 export class Converter {
+  private readonly componentInterfacesFolderName: string = 'interfaces';
   private commonFolderModelsPath: string = '';
-  private componentInterfacesFolderName: string = '';
   private readonly commonHelpers: CommonHelpers;
   private readonly interfaceBuilder: InterfaceBuilder;
   private readonly config: PluginConfig;
@@ -31,8 +31,7 @@ export class Converter {
       return;
     }
 
-    this.componentInterfacesFolderName = this.config.componentInterfacesFolderName;
-    this.setCommonInterfacesFolder(this.config);
+    this.setCommonInterfacesFolder();
 
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
     const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
@@ -47,8 +46,8 @@ export class Converter {
     }
   }
 
-  private setCommonInterfacesFolder(config: PluginConfig) {
-    this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive(config.commonInterfacesFolderName, pluginName);
+  private setCommonInterfacesFolder() {
+    this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive('common', this.config.commonInterfacesFolderName);
   }
 
   private getSchemas(folderPath: string, schemaType: SchemaSource): SchemaInfo[] {

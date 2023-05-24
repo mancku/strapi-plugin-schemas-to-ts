@@ -1,9 +1,9 @@
 import { PluginConfig } from "../models/pluginConfig";
+import { pluginName } from "../register";
 
 const config: PluginConfig = {
   acceptedNodeEnvs: ["development"],
-  commonInterfacesFolderName: "common",
-  componentInterfacesFolderName: "interfaces",
+  commonInterfacesFolderName: pluginName,
   verboseLogs: false,
 };
 
