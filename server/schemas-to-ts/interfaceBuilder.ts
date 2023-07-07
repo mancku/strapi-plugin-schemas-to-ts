@@ -110,7 +110,7 @@ export class InterfaceBuilder {
         caption: string;
         width: number;
         height: number;
-        formats: { thumbnail: MediaFormat; medium: MediaFormat; small: MediaFormat; };
+        formats: { thumbnail: MediaFormat; small: MediaFormat; medium: MediaFormat; large: MediaFormat; };
         hash: string;
         ext: string;
         mime: string;
