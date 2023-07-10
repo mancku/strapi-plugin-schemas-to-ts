@@ -217,6 +217,10 @@ export class InterfaceBuilder {
       indentation += '  ';
     }
 
+    interfaceText += `${indentation}createdAt: Date;
+    ${indentation}updatedAt: Date;
+    ${indentation}publishedAt?: Date;`;
+
     const attributes = Object.entries(schemaInfo.schema.attributes);
     for (const attribute of attributes) {
       let propertyName = attribute[0];
