@@ -155,12 +155,12 @@ export class InterfaceBuilder {
       return null;
     }
 
-    const interfaceDependencies: any[] = [];
+    const interfaceDependencies: string[] = [];
     let interfaceText = this.buildInterfaceText(schemaInfo, schemaType, interfaceDependencies);
 
     for (const dependency of interfaceDependencies) {
       const dependencySchemaInfo = allSchemas.find((x: SchemaInfo) => {
-        return x.pascalName === dependency.type.replace('_Plain', '').replace('_NoRelations', '');
+        return x.pascalName === dependency.replace('_Plain', '').replace('_NoRelations', '');
       });
 
       let importPath = schemaInfo.destinationFolder;
@@ -169,9 +169,12 @@ export class InterfaceBuilder {
         const fileName: string = this.commonHelpers.getFileNameFromSchema(dependencySchemaInfo, false);
         importPath = this.getImportPath(importPath, fileName);
       }
-      const dependencyImport: string = `import { ${dependency.type} } from '${importPath}';`;
-      this.commonHelpers.printVerboseLog(`Adding dependency to ${schemaInfo.pascalName}`, dependencyImport);
-      schemaInfo.dependencies.push(dependencyImport);
+
+      if (dependency !== schemaInfo.pascalName && importPath.toLowerCase() !== `./${schemaInfo.pascalName.toLowerCase()}`) {
+        const dependencyImport: string = `import { ${dependency} } from '${importPath}';`;
+        this.commonHelpers.printVerboseLog(`Adding dependency to ${schemaInfo.pascalName}`, dependencyImport);
+        schemaInfo.dependencies.push(dependencyImport);
+      }
     }
 
     if (schemaType === SchemaType.Standard) {
@@ -193,7 +196,7 @@ export class InterfaceBuilder {
     return attributeValue.required !== true;
   }
 
-  private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType, interfaceDependencies: any[]) {
+  private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType, interfaceDependencies: string[]) {
     let interfaceName: string = schemaInfo.pascalName;
     if (schemaType === SchemaType.Plain) {
       interfaceName += '_Plain';
@@ -234,9 +237,7 @@ export class InterfaceBuilder {
           propertyType += '_Plain';
         }
 
-        interfaceDependencies.push({
-          type: propertyType,
-        });
+        interfaceDependencies.push(propertyType);
         const isArray = attributeValue.relation.endsWith('ToMany');
         const bracketsIfArray = isArray ? '[]' : '';
 
@@ -249,9 +250,7 @@ export class InterfaceBuilder {
           propertyDefinition = `${indentation}${propertyName}: number${bracketsIfArray};\n`;
         } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
           propertyDefinition = `${indentation}${propertyName}: AdminPanelRelationPropertyModification<${propertyType}>${bracketsIfArray};\n`;
-          interfaceDependencies.push({
-            type: 'AdminPanelRelationPropertyModification',
-          });
+          interfaceDependencies.push('AdminPanelRelationPropertyModification');
         }
       }
 
@@ -272,9 +271,7 @@ export class InterfaceBuilder {
         if (schemaType === SchemaType.NoRelations) {
           propertyType += '_NoRelations';
         }
-        interfaceDependencies.push({
-          type: propertyType,
-        });
+        interfaceDependencies.push(propertyType);
         const isArray = attributeValue.repeatable;
         const bracketsIfArray = isArray ? '[]' : '';
         propertyDefinition = `${indentation}${propertyName}: ${propertyType}${bracketsIfArray};\n`;
@@ -298,9 +295,7 @@ export class InterfaceBuilder {
       // -------------------------------------------------
       else if (attributeValue.type === 'media') {
         propertyType = 'Media';
-        interfaceDependencies.push({
-          type: propertyType,
-        });
+        interfaceDependencies.push(propertyType);
 
         const bracketsIfArray = attributeValue.multiple ? '[]' : '';
         if (schemaType === SchemaType.Standard) {
@@ -312,9 +307,7 @@ export class InterfaceBuilder {
         } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
           propertyDefinition = `${indentation}${propertyName}: AdminPanelRelationPropertyModification<${propertyType}>${bracketsIfArray};\n`;
 
-          interfaceDependencies.push({
-            type: 'AdminPanelRelationPropertyModification',
-          });
+          interfaceDependencies.push('AdminPanelRelationPropertyModification');
         }
       }
 
