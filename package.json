@@ -1,6 +1,6 @@
 {
   "name": "strapi-plugin-schemas-to-ts",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A Strapi plugin that automatically generates Typescript interfaces for Strapi entities and components.",
   "strapi": {
     "name": "schemas-to-ts",
@@ -33,6 +33,7 @@
   },
   "license": "MIT",
   "homepage": "https://github.com/mancku/strapi-plugin-schemas-to-ts#readme",
+  "changelog": "https://github.com/mancku/strapi-plugin-schemas-to-ts/blob/main/CHANGELOG.md",
   "repository": {
     "type": "git",
     "url": "https://github.com/mancku/strapi-plugin-schemas-to-ts.git"
@@ -52,7 +53,8 @@
     "dist",
     "strapi-server.js",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "main": "strapi-server.js"
 }
