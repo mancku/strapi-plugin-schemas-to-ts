@@ -36,7 +36,7 @@ export default {
 }
 ```
 
-While the previous example is enough to get it work, there are 3 different properties that can be configured. Their default values are the ones in this example:
+While the previous example is enough to get it working, there are 3 different properties that can be configured. Their default values are the ones in this example:
 ```typescript
 export default {
   // ...
@@ -82,6 +82,9 @@ For every schema, different types of interfaces will be generated. That is becau
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+Please, review the [changelog](CHANGELOG.md) to know about the differences between published versions of this project.
 
 ## Acknowledgements
 This project began as a fork of the [Types-4-Strapi](https://github.com/francescolorenzetti/types-4-strapi) created by [Francesco Lorenzetti](https://github.com/francescolorenzetti), but at the end it was so different on it's purpose (being a plugin Vs being executed on demand) and there was so much new code that I turned it into a new whole project. However the algorithm to convert the schema into an interface is heavily inspired in Francesco's work.
