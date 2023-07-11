@@ -35,7 +35,11 @@ export class CommonHelpers {
     return fileName;
   }
 
-  public static isWindows() {
+  public static isWindows(): boolean {
     return process.platform === 'win32';
+  }
+
+  public static capitalizeFirstLetter(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
   }
 }

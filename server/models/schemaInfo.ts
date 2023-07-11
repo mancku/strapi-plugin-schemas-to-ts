@@ -11,6 +11,7 @@ export interface SchemaInfo {
   noRelationsInterfaceAsText: string;
   adminPanelLifeCycleRelationsInterfaceAsText: string;
   dependencies: string[];
+  enums: string[];
 }
 
 const defaultSchemaInfo: SchemaInfo = {
@@ -24,6 +25,7 @@ const defaultSchemaInfo: SchemaInfo = {
   adminPanelLifeCycleRelationsInterfaceAsText: '',
   schema: undefined,
   dependencies: [],
+  enums: [],
 };
 
 export default defaultSchemaInfo;
