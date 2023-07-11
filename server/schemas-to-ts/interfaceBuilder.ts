@@ -1,6 +1,7 @@
 import { pascalCase } from "pascal-case";
 import path from 'path';
 import prettier from 'prettier';
+import { InterfaceBuilderResult } from "../models/interfaceBuilderResult";
 import defaultSchemaInfo, { SchemaInfo } from "../models/schemaInfo";
 import { SchemaSource } from "../models/schemaSource";
 import { SchemaType } from "../models/schemaType";
@@ -24,6 +25,7 @@ export class InterfaceBuilder {
       this.convertToInterface(schema, schemas, SchemaType.AdminPanelLifeCycle);
     }
     schema.dependencies = [...new Set(schema.dependencies)];
+    schema.enums = [...new Set(schema.enums)];
   }
 
   public buildInterfacesFileContent(schema: SchemaInfo) {
@@ -32,6 +34,12 @@ export class InterfaceBuilder {
       interfacesFileContent += schema.dependencies.join('\n');
       interfacesFileContent += '\n\n';
     }
+
+    if (schema.enums?.length > 0) {
+      interfacesFileContent += schema.enums.join('\n');
+      interfacesFileContent += '\n\n';
+    }
+
     let interfacesText = schema.interfaceAsText;
     interfacesText += `\n${schema.plainInterfaceAsText}`;
     interfacesText += `\n${schema.noRelationsInterfaceAsText}`;
@@ -155,10 +163,9 @@ export class InterfaceBuilder {
       return null;
     }
 
-    const interfaceDependencies: string[] = [];
-    let interfaceText = this.buildInterfaceText(schemaInfo, schemaType, interfaceDependencies);
+    const builtInterface: InterfaceBuilderResult = this.buildInterfaceText(schemaInfo, schemaType);
 
-    for (const dependency of interfaceDependencies) {
+    for (const dependency of builtInterface.interfaceDependencies) {
       const dependencySchemaInfo = allSchemas.find((x: SchemaInfo) => {
         return x.pascalName === dependency.replace('_Plain', '').replace('_NoRelations', '');
       });
@@ -177,14 +184,16 @@ export class InterfaceBuilder {
       }
     }
 
+    schemaInfo.enums.push(...builtInterface.interfaceEnums);
+
     if (schemaType === SchemaType.Standard) {
-      schemaInfo.interfaceAsText = interfaceText;
+      schemaInfo.interfaceAsText = builtInterface.interfaceText;
     } else if (schemaType === SchemaType.Plain) {
-      schemaInfo.plainInterfaceAsText = interfaceText;
+      schemaInfo.plainInterfaceAsText = builtInterface.interfaceText;
     } else if (schemaType === SchemaType.NoRelations) {
-      schemaInfo.noRelationsInterfaceAsText = interfaceText;
+      schemaInfo.noRelationsInterfaceAsText = builtInterface.interfaceText;
     } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-      schemaInfo.adminPanelLifeCycleRelationsInterfaceAsText = interfaceText;
+      schemaInfo.adminPanelLifeCycleRelationsInterfaceAsText = builtInterface.interfaceText;
     }
   }
 
@@ -196,7 +205,7 @@ export class InterfaceBuilder {
     return attributeValue.required !== true;
   }
 
-  private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType, interfaceDependencies: string[]) {
+  private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType): InterfaceBuilderResult {
     let interfaceName: string = schemaInfo.pascalName;
     if (schemaType === SchemaType.Plain) {
       interfaceName += '_Plain';
@@ -205,6 +214,9 @@ export class InterfaceBuilder {
     } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
       interfaceName += '_AdminPanelLifeCycle';
     }
+
+    const interfaceEnums: string[] = [];
+    const interfaceDependencies: string[] = [];
 
     let interfaceText = `export interface ${interfaceName} {\n`;
     if (schemaInfo.source === SchemaSource.Api) {
@@ -223,10 +235,13 @@ export class InterfaceBuilder {
 
     const attributes = Object.entries(schemaInfo.schema.attributes);
     for (const attribute of attributes) {
-      let propertyName = attribute[0];
+      const originalPropertyName: string = attribute[0];
+      let propertyName: string = originalPropertyName;
       const attributeValue: any = attribute[1];
-      if (this.isOptional(attributeValue))
+      if (this.isOptional(attributeValue)) {
         propertyName += '?';
+      }
+
       let propertyType;
       let propertyDefinition;
       // -------------------------------------------------
@@ -321,8 +336,15 @@ export class InterfaceBuilder {
       // Enumeration
       // -------------------------------------------------
       else if (attributeValue.type === 'enumeration') {
-        const enumOptions = attributeValue.enum.map(v => `'${v}'`).join(' | ');
-        propertyDefinition = `${indentation}${propertyName}: ${enumOptions};\n`;
+        const enumName: string = CommonHelpers.capitalizeFirstLetter(originalPropertyName);
+        const enumOptions: string = attributeValue.enum.map((value: string) => {
+          value = value.trim();
+          return `  ${CommonHelpers.capitalizeFirstLetter(value)} = '${value}',`;
+        }).join('\n');
+        const enumText: string = `export enum ${enumName} {\n${enumOptions}}`;
+        interfaceEnums.push(enumText);
+
+        propertyDefinition = `${indentation}${propertyName}: ${enumName};\n`;
       }
 
 
@@ -419,7 +441,11 @@ export class InterfaceBuilder {
     }
 
     interfaceText += '}\n';
-    return interfaceText;
+    return {
+      interfaceText,
+      interfaceDependencies,
+      interfaceEnums
+    };
   }
 
   private getImportPath(importPath: string, fileName: string): string {

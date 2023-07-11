@@ -116,6 +116,7 @@ export class Converter {
       noRelationsInterfaceAsText: '',
       adminPanelLifeCycleRelationsInterfaceAsText: '',
       dependencies: [],
+      enums: [],
     };
   }
 
