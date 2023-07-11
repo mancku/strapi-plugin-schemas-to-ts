@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2] - 2023-07-11
+
+### Changed
+**Commit [52bc7477107c0d31f41a698646e08f29d7f7a6f9](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/52bc7477107c0d31f41a698646e08f29d7f7a6f9)**: **Modified interface builder to generate enumerations as Typescript enums.**
+
+Strapi enumeration schema attributes weren't being generated as Typescript enums. Now they are, so they can be referenced outside the schema interfaces and used as regular enums.
+
+
 ## [1.1.1] - 2023-07-11
 
 ### Fixed
@@ -8,7 +16,7 @@
 - [Fixed circular relation error](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/5)
 
 ### Documentation
-- Added Changelog
+- [Added Changelog](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/d6ebfcbf2b949681c104d1bbde41d873fe9fb672)
 
 ## [1.1.0] - 2023-05-24
 
