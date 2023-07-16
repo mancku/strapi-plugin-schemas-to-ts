@@ -10,6 +10,9 @@ import { pluginName } from "../register";
 import { CommonHelpers } from "./commonHelpers";
 import { FileHelpers } from "./fileHelpers";
 
+const plainClassSuffix: string = '_Plain';
+const noRelationsClassSuffix: string = '_NoRelations';
+const adminPanelLifeCycleClassSuffix: string = '_AdminPanelLifeCycle';
 export class InterfaceBuilder {
 
   private prettierOptions: prettier.Options | undefined;
@@ -168,7 +171,7 @@ export class InterfaceBuilder {
 
     for (const dependency of builtInterface.interfaceDependencies) {
       const dependencySchemaInfo = allSchemas.find((x: SchemaInfo) => {
-        return x.pascalName === dependency.replace('_Plain', '').replace('_NoRelations', '');
+        return x.pascalName === dependency.replace(plainClassSuffix, '').replace(noRelationsClassSuffix, '');
       });
 
       let importPath = schemaInfo.destinationFolder;
@@ -209,11 +212,11 @@ export class InterfaceBuilder {
   private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType): InterfaceBuilderResult {
     let interfaceName: string = schemaInfo.pascalName;
     if (schemaType === SchemaType.Plain) {
-      interfaceName += '_Plain';
+      interfaceName += plainClassSuffix;
     } else if (schemaType === SchemaType.NoRelations) {
-      interfaceName += '_NoRelations';
+      interfaceName += noRelationsClassSuffix;
     } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-      interfaceName += '_AdminPanelLifeCycle';
+      interfaceName += adminPanelLifeCycleClassSuffix;
     }
 
     const interfaceEnums: string[] = [];
@@ -256,7 +259,7 @@ export class InterfaceBuilder {
           : `${pascalCase(attributeValue.target.split('.')[1])}`;
 
         if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyType += '_Plain';
+          propertyType += plainClassSuffix;
         }
 
         interfaceDependencies.push(propertyType);
@@ -288,10 +291,10 @@ export class InterfaceBuilder {
             : pascalCase(attributeValue.component.split('.')[1]);
 
         if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyType += '_Plain';
+          propertyType += plainClassSuffix;
         }
         if (schemaType === SchemaType.NoRelations) {
-          propertyType += '_NoRelations';
+          propertyType += noRelationsClassSuffix;
         }
         interfaceDependencies.push(propertyType);
         const isArray = attributeValue.repeatable;
@@ -341,7 +344,10 @@ export class InterfaceBuilder {
       else if (attributeValue.type === 'enumeration') {
         let enumName: string = CommonHelpers.capitalizeFirstLetter(pascalCase(originalPropertyName));
         if (this.config.alwaysAddEnumSuffix ||
-          enumName.toLowerCase() === interfaceName.toLowerCase()) {
+          originalPropertyName.toLowerCase() === schemaInfo.pascalName.toLowerCase() ||
+          originalPropertyName.toLowerCase() === `${schemaInfo.pascalName.toLowerCase()}${plainClassSuffix.toLowerCase()}` ||
+          originalPropertyName.toLowerCase() === `${schemaInfo.pascalName.toLowerCase()}${noRelationsClassSuffix.toLowerCase()}` ||
+          originalPropertyName.toLowerCase() === `${schemaInfo.pascalName.toLowerCase()}${adminPanelLifeCycleClassSuffix.toLowerCase()}`) {
           enumName += 'Enum';
         }
         const enumOptions: string = attributeValue.enum.map((value: string) => {
