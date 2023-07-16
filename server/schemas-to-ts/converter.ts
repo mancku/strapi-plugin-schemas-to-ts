@@ -19,7 +19,7 @@ export class Converter {
   constructor(config: PluginConfig) {
     this.config = config;
     this.commonHelpers = new CommonHelpers(config);
-    this.interfaceBuilder = new InterfaceBuilder(this.commonHelpers);
+    this.interfaceBuilder = new InterfaceBuilder(this.commonHelpers, config);
     this.commonHelpers.printVerboseLog(`${pluginName} configuration`, this.config);
   }
 

@@ -2,6 +2,7 @@ import { pascalCase } from "pascal-case";
 import path from 'path';
 import prettier from 'prettier';
 import { InterfaceBuilderResult } from "../models/interfaceBuilderResult";
+import { PluginConfig } from "../models/pluginConfig";
 import defaultSchemaInfo, { SchemaInfo } from "../models/schemaInfo";
 import { SchemaSource } from "../models/schemaSource";
 import { SchemaType } from "../models/schemaType";
@@ -9,10 +10,13 @@ import { pluginName } from "../register";
 import { CommonHelpers } from "./commonHelpers";
 import { FileHelpers } from "./fileHelpers";
 
+const plainClassSuffix: string = '_Plain';
+const noRelationsClassSuffix: string = '_NoRelations';
+const adminPanelLifeCycleClassSuffix: string = '_AdminPanelLifeCycle';
 export class InterfaceBuilder {
 
   private prettierOptions: prettier.Options | undefined;
-  constructor(private commonHelpers: CommonHelpers) {
+  constructor(private commonHelpers: CommonHelpers, private config: PluginConfig) {
     this.prettierOptions = this.commonHelpers.getPrettierOptions();
   }
 
@@ -167,7 +171,7 @@ export class InterfaceBuilder {
 
     for (const dependency of builtInterface.interfaceDependencies) {
       const dependencySchemaInfo = allSchemas.find((x: SchemaInfo) => {
-        return x.pascalName === dependency.replace('_Plain', '').replace('_NoRelations', '');
+        return x.pascalName === dependency.replace(plainClassSuffix, '').replace(noRelationsClassSuffix, '');
       });
 
       let importPath = schemaInfo.destinationFolder;
@@ -208,11 +212,11 @@ export class InterfaceBuilder {
   private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType): InterfaceBuilderResult {
     let interfaceName: string = schemaInfo.pascalName;
     if (schemaType === SchemaType.Plain) {
-      interfaceName += '_Plain';
+      interfaceName += plainClassSuffix;
     } else if (schemaType === SchemaType.NoRelations) {
-      interfaceName += '_NoRelations';
+      interfaceName += noRelationsClassSuffix;
     } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-      interfaceName += '_AdminPanelLifeCycle';
+      interfaceName += adminPanelLifeCycleClassSuffix;
     }
 
     const interfaceEnums: string[] = [];
@@ -255,7 +259,7 @@ export class InterfaceBuilder {
           : `${pascalCase(attributeValue.target.split('.')[1])}`;
 
         if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyType += '_Plain';
+          propertyType += plainClassSuffix;
         }
 
         interfaceDependencies.push(propertyType);
@@ -287,10 +291,10 @@ export class InterfaceBuilder {
             : pascalCase(attributeValue.component.split('.')[1]);
 
         if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyType += '_Plain';
+          propertyType += plainClassSuffix;
         }
         if (schemaType === SchemaType.NoRelations) {
-          propertyType += '_NoRelations';
+          propertyType += noRelationsClassSuffix;
         }
         interfaceDependencies.push(propertyType);
         const isArray = attributeValue.repeatable;
@@ -338,10 +342,29 @@ export class InterfaceBuilder {
       // Enumeration
       // -------------------------------------------------
       else if (attributeValue.type === 'enumeration') {
-        const enumName: string = CommonHelpers.capitalizeFirstLetter(originalPropertyName);
+        let enumName: string = CommonHelpers.capitalizeFirstLetter(pascalCase(originalPropertyName));
+        if (this.config.alwaysAddEnumSuffix ||
+          originalPropertyName.toLowerCase() === schemaInfo.pascalName.toLowerCase() ||
+          originalPropertyName.toLowerCase() === `${schemaInfo.pascalName.toLowerCase()}${plainClassSuffix.toLowerCase()}` ||
+          originalPropertyName.toLowerCase() === `${schemaInfo.pascalName.toLowerCase()}${noRelationsClassSuffix.toLowerCase()}` ||
+          originalPropertyName.toLowerCase() === `${schemaInfo.pascalName.toLowerCase()}${adminPanelLifeCycleClassSuffix.toLowerCase()}`) {
+          enumName += 'Enum';
+        }
         const enumOptions: string = attributeValue.enum.map((value: string) => {
-          value = value.trim();
-          return `  ${CommonHelpers.capitalizeFirstLetter(value)} = '${value}',`;
+          let key: string = value;
+          // The normalize('NFD') method will decompose the accented characters into their basic letters and combining diacritical marks.
+          key = key.normalize("NFD");
+          /*
+          The /[^a-z0-9]/gi is a regular expression that matches any character that is not a letter (a-z, case insensitive due to i) or a digit (0-9).
+          The g means it's a global search, so it will replace all instances, not just the first one.
+          The replace method then replaces all those matched characters with nothing (''), effectively removing them from the string.
+          This even trims the value.
+          */
+          key = key.replace(/[^a-z0-9]/gi, '');
+          if (!isNaN(parseFloat(key))) {
+            key = '_' + key;
+          }
+          return `  ${key} = '${value}',`;
         }).join('\n');
         const enumText: string = `export enum ${enumName} {\n${enumOptions}}`;
         interfaceEnums.push(enumText);
