@@ -46,6 +46,7 @@ export default {
       acceptedNodeEnvs: ["development"],
       commonInterfacesFolderName: "schemas-to-ts",
       verboseLogs: false,
+      alwaysAddEnumSuffix: false
     }
   },
   // ...
@@ -55,6 +56,7 @@ export default {
 - acceptedNodeEnvs ➡️ An array with all the environments (process.env.NODE_ENV) in which the interfaces will be generated.
 - commonInterfacesFolderName ➡️ The `common` interfaces (see below) will be generated in the `./src/common/{commonInterfacesFolderName}` folder. If there's no value assigned to this property, or in case the value is empty ("") it will use the default value, so it will be `./src/common/schemas-to-ts`.
 - verboseLogs ➡️ Set to true to get additional console logs during the execution of the plugin.
+- alwaysAddEnumSuffix ➡️ Set to true will generate all enums with an `Enum` suffix. For instance: `CarType` would become `CarTypeEnum`.
 
 ## Interfaces sources
 There are 3 different interface sources: API, Component & Common.
@@ -74,6 +76,22 @@ For every schema, different types of interfaces will be generated. That is becau
 - Plain ➡️ there's no `attributes` property, so the id property and the rest of the properties are at the same level.
 - No Relations ➡️ Properties that are a relationship to other API interface will be of type number instead of their type being the interface of their relationship.
 - AdminPanelLifeCycle ➡️ Properties of an API interface that are a relationship to other API interface will be of type AdminPanelRelationPropertyModification and then the plain interface of the current Schema.
+
+## Enums
+Strapi enumeration attributes will be generated as typescript enums. However there are some considerations regarding enum names:
+- If the alwaysAddEnumSuffix is set to true, the enum will be generated as explained in the config description.
+- Same would happen if the enum name collides with any interface name generated from that schema.
+- Typescript enum options only allow letters and numbers in their name, so any other character would be eliminated, and vowels would be stripped off their accents.
+- There are many versions of Strapi that allows to have enum attributes in components with numeric values. As the values get converted to typescript enum options, a numeric one would nor be valid. To avoid that error, any time an enum option is numeric, it'll have an underscore as a prefix. 
+
+Here's an example of the last two points:
+```ts
+export enum Year {
+  Starting2012 = 'Starting-2012',
+  _2013 = '2013',
+  Ending2014 = 'Ending-2014'
+}
+```
 
 ## Interfaces paths
 - API interfaces will be created in the same folder as their schemas. The name of the file will be the same as the singular name property in the schema.
