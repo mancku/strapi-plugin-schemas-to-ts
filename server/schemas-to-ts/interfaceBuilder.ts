@@ -2,6 +2,7 @@ import { pascalCase } from "pascal-case";
 import path from 'path';
 import prettier from 'prettier';
 import { InterfaceBuilderResult } from "../models/interfaceBuilderResult";
+import { PluginConfig } from "../models/pluginConfig";
 import defaultSchemaInfo, { SchemaInfo } from "../models/schemaInfo";
 import { SchemaSource } from "../models/schemaSource";
 import { SchemaType } from "../models/schemaType";
@@ -12,7 +13,7 @@ import { FileHelpers } from "./fileHelpers";
 export class InterfaceBuilder {
 
   private prettierOptions: prettier.Options | undefined;
-  constructor(private commonHelpers: CommonHelpers) {
+  constructor(private commonHelpers: CommonHelpers, private config: PluginConfig) {
     this.prettierOptions = this.commonHelpers.getPrettierOptions();
   }
 
@@ -338,10 +339,26 @@ export class InterfaceBuilder {
       // Enumeration
       // -------------------------------------------------
       else if (attributeValue.type === 'enumeration') {
-        const enumName: string = CommonHelpers.capitalizeFirstLetter(originalPropertyName);
+        let enumName: string = CommonHelpers.capitalizeFirstLetter(pascalCase(originalPropertyName));
+        if (this.config.alwaysAddEnumSuffix ||
+          enumName.toLowerCase() === interfaceName.toLowerCase()) {
+          enumName += 'Enum';
+        }
         const enumOptions: string = attributeValue.enum.map((value: string) => {
-          value = value.trim();
-          return `  ${CommonHelpers.capitalizeFirstLetter(value)} = '${value}',`;
+          let key: string = value;
+          // The normalize('NFD') method will decompose the accented characters into their basic letters and combining diacritical marks.
+          key = key.normalize("NFD");
+          /*
+          The /[^a-z0-9]/gi is a regular expression that matches any character that is not a letter (a-z, case insensitive due to i) or a digit (0-9).
+          The g means it's a global search, so it will replace all instances, not just the first one.
+          The replace method then replaces all those matched characters with nothing (''), effectively removing them from the string.
+          This even trims the value.
+          */
+          key = key.replace(/[^a-z0-9]/gi, '');
+          if (!isNaN(parseFloat(key))) {
+            key = '_' + key;
+          }
+          return `  ${key} = '${value}',`;
         }).join('\n');
         const enumText: string = `export enum ${enumName} {\n${enumOptions}}`;
         interfaceEnums.push(enumText);
