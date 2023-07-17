@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.4] - 2023-07-16
+### Fixed
+- [Fixed enum naming](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/17)
+
 ## [1.1.3] - 2023-07-11
 ### Fixed
 - [Avoiding adding createdAt, updatedAt and publishedAt to components](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/13)
