@@ -181,7 +181,9 @@ export class InterfaceBuilder {
         importPath = this.getImportPath(importPath, fileName);
       }
 
-      if (dependency !== schemaInfo.pascalName && importPath.toLowerCase() !== `./${schemaInfo.pascalName.toLowerCase()}`) {
+      if (dependency !== schemaInfo.pascalName && 
+        importPath.toLowerCase() !== `./${schemaInfo.pascalName.toLowerCase()}` &&
+        importPath.toLowerCase() !== `./${schemaInfo.schemaName.toLowerCase()}`) {
         const dependencyImport: string = `import { ${dependency} } from '${importPath}';`;
         this.commonHelpers.printVerboseLog(`Adding dependency to ${schemaInfo.pascalName}`, dependencyImport);
         schemaInfo.dependencies.push(dependencyImport);

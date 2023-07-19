@@ -84,20 +84,20 @@ export class Converter {
     }
 
     let folder = '';
-    let interfaceName = '';
+    let schemaName = '';
 
     switch (schemaType) {
       case SchemaSource.Api:
-        interfaceName = schema.info.singularName;
+        schemaName = schema.info.singularName;
         folder = path.dirname(file);
         break;
       case SchemaSource.Common:
-        interfaceName = schema.info.displayName;
+        schemaName = schema.info.displayName;
         folder = this.commonFolderModelsPath;
         break;
       case SchemaSource.Component:
         let fileNameWithoutExtension = path.basename(file, path.extname(file));
-        interfaceName = pascalCase(fileNameWithoutExtension);
+        schemaName = fileNameWithoutExtension;
         folder = path.join(path.dirname(file), this.componentInterfacesFolderName);
         if (!FileHelpers.folderExists(folder)) {
           fs.mkdirSync(folder);
@@ -109,7 +109,8 @@ export class Converter {
       schemaPath: file,
       destinationFolder: folder,
       schema: schema,
-      pascalName: pascalCase(interfaceName),
+      schemaName: schemaName,
+      pascalName: pascalCase(schemaName),
       source: schemaType,
       interfaceAsText: '',
       plainInterfaceAsText: '',
