@@ -4,6 +4,7 @@ export interface SchemaInfo {
   schemaPath: string;
   destinationFolder: string;
   schema: any;
+  schemaName: string;
   pascalName: string;
   source: SchemaSource;
   interfaceAsText: string;
@@ -17,6 +18,7 @@ export interface SchemaInfo {
 const defaultSchemaInfo: SchemaInfo = {
   destinationFolder: '',
   interfaceAsText: '',
+  schemaName: '',
   pascalName: '',
   source: SchemaSource.Common,
   schemaPath: '',
