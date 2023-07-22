@@ -35,7 +35,7 @@ export class Converter {
 
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
     const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
-    const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component);
+    const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component, apiSchemas);
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];
     for (const schema of schemas.filter(x => x.source !== SchemaSource.Common)) {
       this.interfaceBuilder.convertSchemaToInterfaces(schema, schemas);
@@ -50,7 +50,7 @@ export class Converter {
     this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive('common', this.config.commonInterfacesFolderName);
   }
 
-  private getSchemas(folderPath: string, schemaType: SchemaSource): SchemaInfo[] {
+  private getSchemas(folderPath: string, schemaSource: SchemaSource, apiSchemas?: SchemaInfo[]): SchemaInfo[] {
     const files: string[] = [];
 
     if (FileHelpers.folderExists(folderPath)) {
@@ -71,11 +71,11 @@ export class Converter {
     }
 
     return files
-      .filter((file: string) => (schemaType === SchemaSource.Api ? file.endsWith('schema.json') : file.endsWith('.json')))
-      .map((file: string) => this.parseSchema(file, schemaType));
+      .filter((file: string) => (schemaSource === SchemaSource.Api ? file.endsWith('schema.json') : file.endsWith('.json')))
+      .map((file: string) => this.parseSchema(file, schemaSource, apiSchemas));
   }
 
-  private parseSchema(file: string, schemaType: SchemaSource): SchemaInfo {
+  private parseSchema(file: string, schemaSource: SchemaSource, apiSchemas?: SchemaInfo[]): SchemaInfo {
     let schema: any = undefined;
     try {
       schema = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -86,7 +86,7 @@ export class Converter {
     let folder = '';
     let schemaName = '';
 
-    switch (schemaType) {
+    switch (schemaSource) {
       case SchemaSource.Api:
         schemaName = schema.info.singularName;
         folder = path.dirname(file);
@@ -105,13 +105,21 @@ export class Converter {
         break;
     }
 
+    let pascalName: string = pascalCase(schemaName);
+    let needsComponentSuffix: boolean = schemaSource === SchemaSource.Component &&
+      apiSchemas?.some(x => x.pascalName === pascalName);
+    if (needsComponentSuffix) {
+      pascalName += 'Component';
+    }
+
     return {
       schemaPath: file,
       destinationFolder: folder,
       schema: schema,
       schemaName: schemaName,
-      pascalName: pascalCase(schemaName),
-      source: schemaType,
+      pascalName: pascalName,
+      needsComponentSuffix: needsComponentSuffix,
+      source: schemaSource,
       interfaceAsText: '',
       plainInterfaceAsText: '',
       noRelationsInterfaceAsText: '',

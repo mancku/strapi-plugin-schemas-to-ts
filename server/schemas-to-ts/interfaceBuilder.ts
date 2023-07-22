@@ -167,7 +167,7 @@ export class InterfaceBuilder {
       return null;
     }
 
-    const builtInterface: InterfaceBuilderResult = this.buildInterfaceText(schemaInfo, schemaType);
+    const builtInterface: InterfaceBuilderResult = this.buildInterfaceText(schemaInfo, schemaType, allSchemas);
 
     for (const dependency of builtInterface.interfaceDependencies) {
       const dependencySchemaInfo = allSchemas.find((x: SchemaInfo) => {
@@ -181,7 +181,11 @@ export class InterfaceBuilder {
         importPath = this.getImportPath(importPath, fileName);
       }
 
-      if (dependency !== schemaInfo.pascalName && 
+
+      // When a schema name is not single-worded in Strapi, it will have a hyphen between each pair of words, 
+      // so the import path would be different from the pascal name.
+      // This is why it is needed to also compare with the schema name.
+      if (dependency !== schemaInfo.pascalName &&
         importPath.toLowerCase() !== `./${schemaInfo.pascalName.toLowerCase()}` &&
         importPath.toLowerCase() !== `./${schemaInfo.schemaName.toLowerCase()}`) {
         const dependencyImport: string = `import { ${dependency} } from '${importPath}';`;
@@ -211,15 +215,8 @@ export class InterfaceBuilder {
     return attributeValue.required !== true;
   }
 
-  private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType): InterfaceBuilderResult {
-    let interfaceName: string = schemaInfo.pascalName;
-    if (schemaType === SchemaType.Plain) {
-      interfaceName += plainClassSuffix;
-    } else if (schemaType === SchemaType.NoRelations) {
-      interfaceName += noRelationsClassSuffix;
-    } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-      interfaceName += adminPanelLifeCycleClassSuffix;
-    }
+  private buildInterfaceText(schemaInfo: SchemaInfo, schemaType: SchemaType, allSchemas: SchemaInfo[]): InterfaceBuilderResult {
+    const interfaceName: string = this.getInterfaceName(schemaInfo, schemaType);
 
     const interfaceEnums: string[] = [];
     const interfaceDependencies: string[] = [];
@@ -250,8 +247,8 @@ export class InterfaceBuilder {
         propertyName += '?';
       }
 
-      let propertyType;
-      let propertyDefinition;
+      let propertyType: string;
+      let propertyDefinition: string;
       // -------------------------------------------------
       // Relation
       // -------------------------------------------------
@@ -291,6 +288,11 @@ export class InterfaceBuilder {
           attributeValue.target === 'plugin::users-permissions.user'
             ? 'User'
             : pascalCase(attributeValue.component.split('.')[1]);
+
+        const componentInfo: SchemaInfo = this.getAttributeComponentInfo(propertyType, allSchemas);
+        if (componentInfo.needsComponentSuffix) {
+          propertyType += 'Component';
+        }
 
         if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
           propertyType += plainClassSuffix;
@@ -473,6 +475,36 @@ export class InterfaceBuilder {
       interfaceDependencies,
       interfaceEnums
     };
+  }
+
+  /**
+   * When looking for the schema info of the attribute of a component, it is necessary to look for it with 
+   * the Component suffix and without it.
+   * A component name could end with the word 'Component' but not needing the suffix, so in this case the function
+   * `isComponentWithoutSuffix` would return true.
+   */
+  private getAttributeComponentInfo(propertyType: string, allSchemas: SchemaInfo[]): SchemaInfo {
+    function isComponentWithoutSuffix(schemaInfo: SchemaInfo): unknown {
+      return !schemaInfo.needsComponentSuffix && schemaInfo.pascalName === propertyType;
+    }
+    function isComponentWithSuffix(schemaInfo: SchemaInfo): unknown {
+      return schemaInfo.needsComponentSuffix && schemaInfo.pascalName === `${propertyType}Component`;
+    }
+
+    return allSchemas.find(schemaInfo => schemaInfo.source === SchemaSource.Component &&
+      (isComponentWithoutSuffix(schemaInfo) || isComponentWithSuffix(schemaInfo)));
+  }
+
+  private getInterfaceName(schemaInfo: SchemaInfo, schemaType: SchemaType) {
+    let interfaceName: string = schemaInfo.pascalName;
+    if (schemaType === SchemaType.Plain) {
+      interfaceName += plainClassSuffix;
+    } else if (schemaType === SchemaType.NoRelations) {
+      interfaceName += noRelationsClassSuffix;
+    } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
+      interfaceName += adminPanelLifeCycleClassSuffix;
+    }
+    return interfaceName;
   }
 
   private getImportPath(importPath: string, fileName: string): string {
