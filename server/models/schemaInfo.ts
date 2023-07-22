@@ -6,6 +6,7 @@ export interface SchemaInfo {
   schema: any;
   schemaName: string;
   pascalName: string;
+  needsComponentSuffix: boolean;
   source: SchemaSource;
   interfaceAsText: string;
   plainInterfaceAsText: string;
@@ -16,16 +17,17 @@ export interface SchemaInfo {
 }
 
 const defaultSchemaInfo: SchemaInfo = {
+  schemaPath: '',
   destinationFolder: '',
-  interfaceAsText: '',
+  schema: undefined,
   schemaName: '',
   pascalName: '',
+  needsComponentSuffix: false,
   source: SchemaSource.Common,
-  schemaPath: '',
+  interfaceAsText: '',
   plainInterfaceAsText: '',
   noRelationsInterfaceAsText: '',
   adminPanelLifeCycleRelationsInterfaceAsText: '',
-  schema: undefined,
   dependencies: [],
   enums: [],
 };
