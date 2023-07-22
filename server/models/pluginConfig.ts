@@ -3,4 +3,5 @@ export interface PluginConfig {
   commonInterfacesFolderName: string;
   verboseLogs: boolean;
   alwaysAddEnumSuffix: boolean;
+  alwaysAddComponentSuffix: boolean;
 }

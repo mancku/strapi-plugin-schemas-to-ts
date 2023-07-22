@@ -35,7 +35,7 @@ export class Converter {
 
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
     const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
-    const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component, apiSchemas); 
+    const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component, apiSchemas);
     this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
 
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];
@@ -123,7 +123,7 @@ export class Converter {
 
     let pascalName: string = pascalCase(schemaName);
     let needsComponentSuffix: boolean = schemaSource === SchemaSource.Component &&
-      apiSchemas?.some(x => x.pascalName === pascalName);
+      (this.config.alwaysAddComponentSuffix || apiSchemas?.some(x => x.pascalName === pascalName));
     if (needsComponentSuffix) {
       pascalName += 'Component';
     }

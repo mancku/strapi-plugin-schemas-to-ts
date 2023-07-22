@@ -6,6 +6,7 @@ const config: PluginConfig = {
   commonInterfacesFolderName: pluginName,
   verboseLogs: false,
   alwaysAddEnumSuffix: false,
+  alwaysAddComponentSuffix: false,
 };
 
 export default {
