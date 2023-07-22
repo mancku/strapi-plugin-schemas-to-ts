@@ -1,6 +1,11 @@
 # Changelog
 
-## [1.1.5] - 2023-07-23
+## [1.1.7] - 2023-07-23
+### Changed
+- [Commit bb858179e17317e00f5f826a2ae72226e3b6d29b](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/bb858179e17317e00f5f826a2ae72226e3b6d29b)
+  - Added a configuration property to allow to always add the 'Component' suffix to components names
+
+## [1.1.6] - 2023-07-23
 ### Fixed
 - [Fixed name conflicts between components and components and content types](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/24)
 
