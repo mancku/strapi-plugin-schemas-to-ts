@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.5] - 2023-07-23
+### Fixed
+- [Fixed name conflicts between components and components and content types](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/24)
+
 ## [1.1.5] - 2023-07-19
 ### Fixed
 - [Fixed circular dependency reference for plain interfaces](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/21)
