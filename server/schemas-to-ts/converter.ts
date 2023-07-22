@@ -35,7 +35,9 @@ export class Converter {
 
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
     const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
-    const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component, apiSchemas);
+    const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component, apiSchemas); 
+    this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
+
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];
     for (const schema of schemas.filter(x => x.source !== SchemaSource.Common)) {
       this.interfaceBuilder.convertSchemaToInterfaces(schema, schemas);
@@ -43,6 +45,20 @@ export class Converter {
 
     for (const schema of schemas) {
       this.writeInterfacesFile(schema);
+    }
+  }
+
+  /**
+  * A component could need the suffix and the by having it, it would end up with the same name as another one that didn't need it
+    but whose name had the word 'Component' at the end
+  */
+  private adjustComponentsWhoseNamesWouldCollide(componentSchemas: SchemaInfo[]) {
+    for (const componentSchema of componentSchemas.filter(x => x.needsComponentSuffix)) {
+      const component: SchemaInfo = componentSchemas.find(x => x.pascalName === componentSchema.pascalName && !x.needsComponentSuffix);
+      if (component) {
+        component.needsComponentSuffix = true;
+        component.pascalName += 'Component';
+      }
     }
   }
 
