@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.9] - 2023-07-27
+### Fixed
+- [Commit 3f987af161dab7985720365cac2dcfa6f6efa591](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/3f987af161dab7985720365cac2dcfa6f6efa591)
+  - Converting to pascal case after replacing invalid chars would result in losing the underscore in snake case values, so the pascal case would not work properly. Modifying the order would first properly  convert to pascal case and then remove the remaining unwanted chars.
+
+## [1.1.8] - 2023-07-27
+### Changed
+- [Commit ba5d35ddb5b9cdc86f7ec53297d6529772c264ba](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/ba5d35ddb5b9cdc86f7ec53297d6529772c264ba)
+  - Improved enum keys naming by making them Pacal case. This way there won't be any further inconsistency where some keys starts with upper case and some with lower case.
+
 ## [1.1.7] - 2023-07-23
 ### Changed
 - [Commit bb858179e17317e00f5f826a2ae72226e3b6d29b](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/bb858179e17317e00f5f826a2ae72226e3b6d29b)
