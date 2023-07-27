@@ -358,6 +358,10 @@ export class InterfaceBuilder {
           let key: string = value;
           // The normalize('NFD') method will decompose the accented characters into their basic letters and combining diacritical marks.
           key = key.normalize("NFD");
+          
+          // Following Typescript documentation, enum keys are Pascal Case.: https://www.typescriptlang.org/docs/handbook/enums.html
+          key = pascalCase(key);
+
           /*
           The /[^a-z0-9]/gi is a regular expression that matches any character that is not a letter (a-z, case insensitive due to i) or a digit (0-9).
           The g means it's a global search, so it will replace all instances, not just the first one.
@@ -365,9 +369,7 @@ export class InterfaceBuilder {
           This even trims the value.
           */
           key = key.replace(/[^a-z0-9]/gi, '');
-          
-          // Following Typescript documentation, enum keys are Pascal Case.: https://www.typescriptlang.org/docs/handbook/enums.html
-          key = pascalCase(key)
+                    
           if (!isNaN(parseFloat(key))) {
             key = '_' + key;
           }
