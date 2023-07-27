@@ -365,6 +365,9 @@ export class InterfaceBuilder {
           This even trims the value.
           */
           key = key.replace(/[^a-z0-9]/gi, '');
+          
+          // Following Typescript documentation, enum keys are Pascal Case.: https://www.typescriptlang.org/docs/handbook/enums.html
+          key = pascalCase(key)
           if (!isNaN(parseFloat(key))) {
             key = '_' + key;
           }
