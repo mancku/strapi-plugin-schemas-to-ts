@@ -13,16 +13,17 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@strapi/helper-plugin": "^4.10.6",
-    "pascal-case": "^3.1.2"
+    "@strapi/helper-plugin": "^4.12.1",
+    "pascal-case": "^3.1.2",
+    "prettier": "^2.7.2"
   },
   "devDependencies": {
-    "@strapi/typescript-utils": "^4.10.6",
-    "typescript": "4.6.3"
+    "@strapi/strapi": "^4.12.1",
+    "@strapi/typescript-utils": "^4.12.1",
+    "typescript": "5.1.6",
+    "@types/prettier": "^2.7.2"
   },
-  "peerDependencies": {
-    "@strapi/strapi": "^4.10.6"
-  },
+  "peerDependencies": {},
   "engines": {
     "node": ">=14.19.1 <=18.x.x",
     "npm": ">=6.0.0"
