@@ -265,7 +265,6 @@ export class InterfaceBuilder {
         const isArray = attributeValue.relation.endsWith('ToMany');
         const bracketsIfArray = isArray ? '[]' : '';
 
-        //TODO review if this should be that way
         if (schemaType === SchemaType.Standard) {
           propertyDefinition = `${indentation}${propertyName}: { data: ${propertyType}${bracketsIfArray} };\n`;
         } else if (schemaType === SchemaType.Plain) {
@@ -273,7 +272,8 @@ export class InterfaceBuilder {
         } else if (schemaType === SchemaType.NoRelations) {
           propertyDefinition = `${indentation}${propertyName}: number${bracketsIfArray};\n`;
         } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-          propertyDefinition = `${indentation}${propertyName}: AdminPanelRelationPropertyModification<${propertyType}>${bracketsIfArray};\n`;
+          // AdminPanelRelationPropertyModification would never be an array, for it contains the arrays. 
+          propertyDefinition = `${indentation}${propertyName}: AdminPanelRelationPropertyModification<${propertyType}>;\n`;
           interfaceDependencies.push('AdminPanelRelationPropertyModification');
         }
       }
