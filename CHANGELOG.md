@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.10] - 2023-07-27
+### Fixed
+- [Commit 12ca71eb11d50d9ae220004a320f9d87f8a2a5ae](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/12ca71eb11d50d9ae220004a320f9d87f8a2a5ae)
+  - AdminPanelRelationPropertyModification should never be an array.
+
+### Changed
+- [Commit 0392ca7a7e7049f63bf71bf0b2369d06f1194149](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/0392ca7a7e7049f63bf71bf0b2369d06f1194149)
+  - Updated and fixed dependencies.
+
 ## [1.1.9] - 2023-07-27
 ### Fixed
 - [Commit 3f987af161dab7985720365cac2dcfa6f6efa591](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/3f987af161dab7985720365cac2dcfa6f6efa591)
