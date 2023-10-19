@@ -144,7 +144,7 @@ export class InterfaceBuilder {
     `);
 
     this.addCommonSchema(result, commonFolderModelsPath, 'BeforeRunEvent',
-      `import { Event } from '@strapi/database/lib/lifecycles/index';
+      `import { Event } from '@strapi/database/dist/lifecycles';
   
     export interface BeforeRunEvent<TState> extends Event {
       state: TState;
