@@ -6,7 +6,7 @@ import { SchemaSource } from '../models/schemaSource';
 export class CommonHelpers {
   private verboseLogs: boolean;
 
-  constructor(config: PluginConfig) {
+  constructor(private config: PluginConfig) {
     this.verboseLogs = config.verboseLogs;
   }
 
@@ -17,6 +17,10 @@ export class CommonHelpers {
   }
 
   public getPrettierOptions(): prettier.Options | undefined {
+    if (!this.config.usePrettierIfAvailable) {
+      return undefined;
+    }
+
     const prettierConfigFile = prettier.resolveConfigFile.sync(strapi.dirs.app.root);
     if (prettierConfigFile !== null) {
       return prettier.resolveConfig.sync(prettierConfigFile, { editorconfig: true }) as prettier.Options;

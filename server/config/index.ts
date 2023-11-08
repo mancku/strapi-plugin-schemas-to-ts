@@ -7,6 +7,7 @@ const config: PluginConfig = {
   verboseLogs: false,
   alwaysAddEnumSuffix: false,
   alwaysAddComponentSuffix: false,
+  usePrettierIfAvailable: true,
 };
 
 export default {

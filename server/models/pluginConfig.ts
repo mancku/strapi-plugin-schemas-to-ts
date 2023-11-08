@@ -4,4 +4,5 @@ export interface PluginConfig {
   verboseLogs: boolean;
   alwaysAddEnumSuffix: boolean;
   alwaysAddComponentSuffix: boolean;
+  usePrettierIfAvailable: boolean;
 }
