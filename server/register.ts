@@ -6,6 +6,6 @@ export const pluginName: string = 'schemas-to-ts';
 
 export default ({ strapi }: { strapi: Strapi }) => {
   const config: PluginConfig = strapi.config.get(`plugin.${pluginName}`);
-  const converter = new Converter(config);
+  const converter = new Converter(strapi, config);
   converter.SchemasToTs();
 };
