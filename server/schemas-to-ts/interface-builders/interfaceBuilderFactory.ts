@@ -9,6 +9,7 @@ export class InterfaceBuilderFactory {
   public static getInterfaceBuilder(strapi: Strapi,
     commonHelpers: CommonHelpers, config: PluginConfig): InterfaceBuilder {
     const strapiVersion: string = this.getStrapiVersion(strapi);
+    console.log(`Detected Strapi version ${strapiVersion} for interface building`);
     if (this.isStrapiVersionGreaterThanOrEqual(strapiVersion, '4.14')) {
       return new PostV414InterfaceBuilder(commonHelpers, config);
     } else {
