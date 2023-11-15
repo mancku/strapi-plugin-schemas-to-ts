@@ -1,19 +1,19 @@
 import { pascalCase } from "pascal-case";
 import path from 'path';
 import prettier from 'prettier';
-import { InterfaceBuilderResult } from "../models/interfaceBuilderResult";
-import { PluginConfig } from "../models/pluginConfig";
-import defaultSchemaInfo, { SchemaInfo } from "../models/schemaInfo";
-import { SchemaSource } from "../models/schemaSource";
-import { SchemaType } from "../models/schemaType";
-import { pluginName } from "../register";
-import { CommonHelpers } from "./commonHelpers";
-import { FileHelpers } from "./fileHelpers";
+import { InterfaceBuilderResult } from "../../models/interfaceBuilderResult";
+import { PluginConfig } from "../../models/pluginConfig";
+import defaultSchemaInfo, { SchemaInfo } from "../../models/schemaInfo";
+import { SchemaSource } from "../../models/schemaSource";
+import { SchemaType } from "../../models/schemaType";
+import { pluginName } from "../../register";
+import { CommonHelpers } from "../commonHelpers";
+import { FileHelpers } from "../fileHelpers";
 
 const plainClassSuffix: string = '_Plain';
 const noRelationsClassSuffix: string = '_NoRelations';
 const adminPanelLifeCycleClassSuffix: string = '_AdminPanelLifeCycle';
-export class InterfaceBuilder {
+export abstract class InterfaceBuilder {
 
   private prettierOptions: prettier.Options | undefined;
   constructor(private commonHelpers: CommonHelpers, private config: PluginConfig) {
@@ -58,8 +58,8 @@ export class InterfaceBuilder {
   }
 
   public generateCommonSchemas(commonFolderModelsPath: string): SchemaInfo[] {
-    const result: SchemaInfo[] = [];
-    this.addCommonSchema(result, commonFolderModelsPath, 'Payload',
+    const commonSchemas: SchemaInfo[] = [];
+    this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'Payload',
       `export interface Payload<T> {
       data: T;
       meta: {
@@ -73,7 +73,7 @@ export class InterfaceBuilder {
     }
     `);
 
-    this.addCommonSchema(result, commonFolderModelsPath, 'User',
+    this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'User',
       `export interface User {
       id: number;
       attributes: {
@@ -98,7 +98,7 @@ export class InterfaceBuilder {
     }
     `);
 
-    this.addCommonSchema(result, commonFolderModelsPath, 'MediaFormat',
+    this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'MediaFormat',
       `export interface MediaFormat {
       name: string;
       hash: string;
@@ -112,7 +112,7 @@ export class InterfaceBuilder {
     }
     `);
 
-    this.addCommonSchema(result, commonFolderModelsPath, 'Media',
+    this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'Media',
       `import { MediaFormat } from './MediaFormat';
     export interface Media {
       id: number;
@@ -136,29 +136,30 @@ export class InterfaceBuilder {
     }
     `);
 
-    this.addCommonSchema(result, commonFolderModelsPath, 'AdminPanelRelationPropertyModification',
+    this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'AdminPanelRelationPropertyModification',
       `export interface AdminPanelRelationPropertyModification<T> {
       connect: T[];
       disconnect: T[];
     }
     `);
 
-    this.addCommonSchema(result, commonFolderModelsPath, 'BeforeRunEvent',
-      `import { Event } from '@strapi/database/lib/lifecycles/index';
-  
-    export interface BeforeRunEvent<TState> extends Event {
-      state: TState;
-    }`);
+    this.addVersionSpecificCommonSchemas(commonSchemas, commonFolderModelsPath);
 
-    this.addCommonSchema(result, commonFolderModelsPath, 'AfterRunEvent',
-      `import { BeforeRunEvent } from './BeforeRunEvent';
-  
-    export interface AfterRunEvent<TState, TResult> extends BeforeRunEvent<TState> {
-      result: TResult;
+    return commonSchemas;
+  }
+
+  public abstract addVersionSpecificCommonSchemas(commonSchemas: SchemaInfo[], commonFolderModelsPath: string): SchemaInfo[];
+
+  protected addCommonSchema(schemas: SchemaInfo[], commonFolderModelsPath: string, pascalName: string,
+    interfaceAsText: string, plainInterfaceAsText?: string): void {
+    const schemaInfo: SchemaInfo = Object.assign({}, defaultSchemaInfo);
+    schemaInfo.destinationFolder = commonFolderModelsPath;
+    schemaInfo.pascalName = pascalName;
+    schemaInfo.interfaceAsText = interfaceAsText;
+    if (plainInterfaceAsText) {
+      schemaInfo.plainInterfaceAsText = plainInterfaceAsText;
     }
-    `);
-
-    return result;
+    schemas.push(schemaInfo);
   }
 
   private convertToInterface(schemaInfo: SchemaInfo, allSchemas: SchemaInfo[], schemaType: SchemaType) {
@@ -358,7 +359,7 @@ export class InterfaceBuilder {
           let key: string = value;
           // The normalize('NFD') method will decompose the accented characters into their basic letters and combining diacritical marks.
           key = key.normalize("NFD");
-          
+
           // Following Typescript documentation, enum keys are Pascal Case.: https://www.typescriptlang.org/docs/handbook/enums.html
           key = pascalCase(key);
 
@@ -369,7 +370,7 @@ export class InterfaceBuilder {
           This even trims the value.
           */
           key = key.replace(/[^a-z0-9]/gi, '');
-                    
+
           if (!isNaN(parseFloat(key))) {
             key = '_' + key;
           }
@@ -525,17 +526,5 @@ export class InterfaceBuilder {
     }
 
     return result;
-  }
-
-  private addCommonSchema(schemas: SchemaInfo[], commonFolderModelsPath: string, pascalName: string,
-    interfaceAsText: string, plainInterfaceAsText?: string): void {
-    const schemaInfo: SchemaInfo = Object.assign({}, defaultSchemaInfo);
-    schemaInfo.destinationFolder = commonFolderModelsPath;
-    schemaInfo.pascalName = pascalName;
-    schemaInfo.interfaceAsText = interfaceAsText;
-    if (plainInterfaceAsText) {
-      schemaInfo.plainInterfaceAsText = plainInterfaceAsText;
-    }
-    schemas.push(schemaInfo);
   }
 }
