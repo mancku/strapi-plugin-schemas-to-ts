@@ -1,3 +1,4 @@
+import { Strapi } from '@strapi/strapi';
 import fs from 'fs';
 import { pascalCase } from "pascal-case";
 import path from 'path';
@@ -7,7 +8,8 @@ import { SchemaSource } from '../models/schemaSource';
 import { pluginName } from '../register';
 import { CommonHelpers } from './commonHelpers';
 import { FileHelpers } from './fileHelpers';
-import { InterfaceBuilder } from './interfaceBuilder';
+import { InterfaceBuilder } from './interface-builders/interfaceBuilder';
+import { InterfaceBuilderFactory } from './interface-builders/interfaceBuilderFactory';
 
 export class Converter {
   private readonly componentInterfacesFolderName: string = 'interfaces';
@@ -16,10 +18,10 @@ export class Converter {
   private readonly interfaceBuilder: InterfaceBuilder;
   private readonly config: PluginConfig;
 
-  constructor(config: PluginConfig) {
+  constructor(strapi: Strapi, config: PluginConfig) {
     this.config = config;
     this.commonHelpers = new CommonHelpers(config);
-    this.interfaceBuilder = new InterfaceBuilder(this.commonHelpers, config);
+    this.interfaceBuilder = InterfaceBuilderFactory.getInterfaceBuilder(strapi, this.commonHelpers, config);
     this.commonHelpers.printVerboseLog(`${pluginName} configuration`, this.config);
   }
 
