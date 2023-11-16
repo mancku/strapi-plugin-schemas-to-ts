@@ -374,6 +374,10 @@ export abstract class InterfaceBuilder {
           if (!isNaN(parseFloat(key))) {
             key = '_' + key;
           }
+
+          // Escape single quotes to avoid compilation errors
+          value = value.replace(/'/g, "\\'");
+
           return `  ${key} = '${value}',`;
         }).join('\n');
         const enumText: string = `export enum ${enumName} {\n${enumOptions}}`;
