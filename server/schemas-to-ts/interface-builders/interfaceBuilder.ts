@@ -374,7 +374,7 @@ export abstract class InterfaceBuilder {
           if (!isNaN(parseFloat(key))) {
             key = '_' + key;
           }
-          return `  ${key} = '${value.replace('\', '\\\'')}',`;
+          return `  ${key} = '${value.replace('\'', '\\\'')}',`;
         }).join('\n');
         const enumText: string = `export enum ${enumName} {\n${enumOptions}}`;
         interfaceEnums.push(enumText);
