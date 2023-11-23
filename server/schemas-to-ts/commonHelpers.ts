@@ -2,18 +2,13 @@ import prettier from 'prettier';
 import { PluginConfig } from "../models/pluginConfig";
 import { SchemaInfo } from '../models/schemaInfo';
 import { SchemaSource } from '../models/schemaSource';
+import { Logger } from './logger';
 
 export class CommonHelpers {
-  private verboseLogs: boolean;
+  public readonly logger: Logger;
 
   constructor(private config: PluginConfig) {
-    this.verboseLogs = config.verboseLogs;
-  }
-
-  public printVerboseLog(message: any, ...optionalParams: any[]): void {
-    if (!!this.verboseLogs) {
-      console.log(message, optionalParams);
-    }
+    this.logger = new Logger(config.logLevel);
   }
 
   public getPrettierOptions(): prettier.Options | undefined {

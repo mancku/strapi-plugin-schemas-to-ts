@@ -21,7 +21,7 @@ export abstract class InterfaceBuilder {
   }
 
   public convertSchemaToInterfaces(schema: SchemaInfo, schemas: SchemaInfo[]) {
-    console.log('Converting schema', schema.schemaPath);
+    this.commonHelpers.logger.debug('Converting schema', schema.schemaPath);
     this.convertToInterface(schema, schemas, SchemaType.Standard);
     this.convertToInterface(schema, schemas, SchemaType.Plain);
     this.convertToInterface(schema, schemas, SchemaType.NoRelations);
@@ -164,7 +164,7 @@ export abstract class InterfaceBuilder {
 
   private convertToInterface(schemaInfo: SchemaInfo, allSchemas: SchemaInfo[], schemaType: SchemaType) {
     if (!schemaInfo.schema) {
-      console.log(`Skipping ${schemaInfo.schemaPath}: schema is empty.`);
+      this.commonHelpers.logger.information(`Skipping ${schemaInfo.schemaPath}: schema is empty.`);
       return null;
     }
 
@@ -190,7 +190,7 @@ export abstract class InterfaceBuilder {
         importPath.toLowerCase() !== `./${schemaInfo.pascalName.toLowerCase()}` &&
         importPath.toLowerCase() !== `./${schemaInfo.schemaName.toLowerCase()}`) {
         const dependencyImport: string = `import { ${dependency} } from '${importPath}';`;
-        this.commonHelpers.printVerboseLog(`Adding dependency to ${schemaInfo.pascalName}`, dependencyImport);
+        this.commonHelpers.logger.verbose(`Adding dependency to ${schemaInfo.pascalName}`, dependencyImport);
         schemaInfo.dependencies.push(dependencyImport);
       }
     }
