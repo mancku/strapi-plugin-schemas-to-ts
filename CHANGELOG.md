@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.20] - 2023-11-23
+### Fixed
+- [fix: escape single quotes in enum values](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/36)
+  - Fixed so enum values with single quotes are not a problem anymore.
+
+- [strapi 4.14 - change source folder](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/29)
+  - Strapi 4.14 introduced a change that "broke" the execution of the plugin. This PR fixes that.
+
+### Changed
+- [Commit b3da788cc954e376b3a699ad9536e7e25d920614](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/b3da788cc954e376b3a699ad9536e7e25d920614)
+  - Added prettier as a configuration option, so it can be disabled.
+
+- [Replace console.log with a configurable logger service](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/39)
+  - Added logger as a configuraion option, so it can be adjusted.
+
 ## [1.1.10] - 2023-07-27
 ### Fixed
 - [Commit 12ca71eb11d50d9ae220004a320f9d87f8a2a5ae](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/12ca71eb11d50d9ae220004a320f9d87f8a2a5ae)
