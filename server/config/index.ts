@@ -1,13 +1,14 @@
+import { LogLevel } from '../models/logLevel';
 import { PluginConfig } from "../models/pluginConfig";
 import { pluginName } from "../register";
 
 const config: PluginConfig = {
   acceptedNodeEnvs: ["development"],
   commonInterfacesFolderName: pluginName,
-  verboseLogs: false,
   alwaysAddEnumSuffix: false,
   alwaysAddComponentSuffix: false,
   usePrettierIfAvailable: true,
+  logLevel: LogLevel.Debug
 };
 
 export default {

@@ -22,14 +22,15 @@ export class Converter {
     this.config = config;
     this.commonHelpers = new CommonHelpers(config);
     this.interfaceBuilder = InterfaceBuilderFactory.getInterfaceBuilder(strapi, this.commonHelpers, config);
-    this.commonHelpers.printVerboseLog(`${pluginName} configuration`, this.config);
+    this.commonHelpers.logger.verbose(`${pluginName} configuration`, this.config);
   }
 
   public SchemasToTs(): void {
     const currentNodeEnv: string = process.env.NODE_ENV ?? '';
     const acceptedNodeEnvs = this.config.acceptedNodeEnvs ?? [];
     if (!acceptedNodeEnvs.includes(currentNodeEnv)) {
-      console.log(`${pluginName} plugin's acceptedNodeEnvs property does not include '${currentNodeEnv}' environment. Skipping conversion of schemas to Typescript.`);
+      this.commonHelpers.logger
+        .information(`${pluginName} plugin's acceptedNodeEnvs property does not include '${currentNodeEnv}' environment. Skipping conversion of schemas to Typescript.`);
       return;
     }
 
@@ -98,7 +99,7 @@ export class Converter {
     try {
       schema = JSON.parse(fs.readFileSync(file, 'utf8'));
     } catch (e) {
-      console.error(`Error while parsing the schema for ${file}:`, e);
+      this.commonHelpers.logger.error(`Error while parsing the schema for ${file}:`, e);
     }
 
     let folder = '';
@@ -164,6 +165,6 @@ export class Converter {
         break;
     }
 
-    FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent);
+    FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent, this.commonHelpers.logger);
   }
 }

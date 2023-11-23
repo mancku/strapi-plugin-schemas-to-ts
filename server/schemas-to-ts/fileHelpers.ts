@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { Logger } from './logger';
 
 export class FileHelpers {
   public static ensureFolderPathExistRecursive(...subfolders: string[]): string {
@@ -21,7 +22,7 @@ export class FileHelpers {
       return false;
     }
   }
-  
+
 
   public static fileExists(filePath: string): boolean {
     try {
@@ -31,18 +32,18 @@ export class FileHelpers {
     }
   }
 
-  public static writeInterfaceFile(folderPath: string, fileName: string, interfacesFileContent: string) {
+  public static writeInterfaceFile(folderPath: string, fileName: string, interfacesFileContent: string, logger: Logger) {
     let writeFile = true;
     const destinationPath: string = path.join(folderPath, fileName);
     if (FileHelpers.fileExists(destinationPath)) {
       const fileContent: string = fs.readFileSync(destinationPath, 'utf8');
       if (fileContent === interfacesFileContent) {
-        console.log(`File ${destinationPath} is up to date.`);
+        logger.debug(`File ${destinationPath} is up to date.`);
         writeFile = false;
       }
     }
     if (writeFile) {
-      console.log(`Writing file ${destinationPath}`);
+      logger.debug(`Writing file ${destinationPath}`);
       fs.writeFileSync(destinationPath, interfacesFileContent, 'utf8');
     }
   }
