@@ -43,6 +43,16 @@ export class CommonHelpers {
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
+  public static compareIgnoringLineBreaks(str1: string, str2: string): boolean {
+    function trimLineBreaks(str: string): string {
+      return str.replaceAll('\n', '').trim();
+    }
+    const normalizedStr1 = trimLineBreaks(str1);
+    const normalizedStr2 = trimLineBreaks(str2);
+
+    return normalizedStr1 === normalizedStr2;
+  }
+
   public readonly headerComment: string = CommonHelpers.headerComment;
 
   public static readonly headerComment: string =

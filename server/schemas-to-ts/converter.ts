@@ -46,9 +46,13 @@ export class Converter {
       this.interfaceBuilder.convertSchemaToInterfaces(schema, schemas);
     }
 
+    const generatedInterfacesPaths: string[] = [];
     for (const schema of schemas) {
-      this.writeInterfacesFile(schema);
+      const filePath = this.writeInterfacesFile(schema);
+      generatedInterfacesPaths.push(filePath);
     }
+
+    FileHelpers.deleteUnnecessasryGeneratedInterfaces(this.commonHelpers.logger, generatedInterfacesPaths);
   }
 
   /**
@@ -148,7 +152,7 @@ export class Converter {
     };
   }
 
-  private writeInterfacesFile(schema: SchemaInfo) {
+  private writeInterfacesFile(schema: SchemaInfo): string {
     const interfacesFileContent = this.interfaceBuilder.buildInterfacesFileContent(schema);
     const fileName: string = this.commonHelpers.getFileNameFromSchema(schema, true);
     let folderPath: string = '';
@@ -165,6 +169,6 @@ export class Converter {
         break;
     }
 
-    FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent, this.commonHelpers.logger);
+    return FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent, this.commonHelpers.logger);
   }
 }
