@@ -1,6 +1,6 @@
 import { LogLevel } from '../models/logLevel';
 import { PluginConfig } from "../models/pluginConfig";
-import { pluginName } from "../register";
+import { pluginName } from '../models/pluginName';
 
 const config: PluginConfig = {
   acceptedNodeEnvs: ["development"],
