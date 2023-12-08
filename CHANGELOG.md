@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.21] - 2023-11-24
+### Fixed
+- Apparently version 1.1.20 was published without being build first, so it didn't actually include all the modifications. This version fixes that.
+- Also, added a `npmpublish` script to the `package.json` so it builds and then publishes
+
 ## [1.1.20] - 2023-11-23
 ### Fixed
 - [fix: escape single quotes in enum values](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/36)
