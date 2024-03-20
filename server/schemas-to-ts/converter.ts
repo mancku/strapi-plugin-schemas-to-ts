@@ -52,7 +52,7 @@ export class Converter {
       generatedInterfacesPaths.push(filePath);
     }
 
-    FileHelpers.deleteUnnecessasryGeneratedInterfaces(this.commonHelpers.logger, generatedInterfacesPaths);
+    FileHelpers.deleteUnnecessaryGeneratedInterfaces(this.commonHelpers.logger, generatedInterfacesPaths);
   }
 
   /**

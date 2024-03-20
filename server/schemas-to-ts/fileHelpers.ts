@@ -72,7 +72,7 @@ export class FileHelpers {
     return relativePath === '' ? './' : relativePath;
   }
 
-  public static deleteUnnecessasryGeneratedInterfaces(logger?: Logger, filesToKeep?: string[]) {
+  public static deleteUnnecessaryGeneratedInterfaces(logger?: Logger, filesToKeep?: string[]) {
     if (!logger) {
       logger = new Logger(LogLevel.Verbose);
     }
