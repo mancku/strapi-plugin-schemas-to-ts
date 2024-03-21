@@ -15,12 +15,17 @@
     "rebuild": "yarn clean && yarn build",
     "fullclean": "rimraf dist/ node_modules/",
     "fullrebuild": "yarn fullclean && yarn install && yarn build",
-    "npmpublish": "yarn rebuild && yarn publish"
+    "npmpublish": "yarn rebuild && yarn publish",
+    "strapi-schemas-to-ts": "node ./dist/server/schemas-to-ts/cli.js"
+  },
+  "bin": {
+    "strapi-schemas-to-ts": "./dist/server/schemas-to-ts/cli.js"
   },
   "dependencies": {
     "@strapi/helper-plugin": "^4.12.1",
     "pascal-case": "^3.1.2",
-    "prettier": "^2.7.2"
+    "prettier": "^2.7.2",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@strapi/strapi": "^4.12.1",
