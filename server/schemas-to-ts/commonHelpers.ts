@@ -7,8 +7,7 @@ import { Logger } from './logger';
 
 export class CommonHelpers {
   public readonly logger: Logger;
-
-  constructor(private config: PluginConfig) {
+  constructor(private config: PluginConfig, private readonly strapiRootPath: string) {
     this.logger = new Logger(config.logLevel);
   }
 
@@ -17,7 +16,7 @@ export class CommonHelpers {
       return undefined;
     }
 
-    const prettierConfigFile = prettier.resolveConfigFile.sync(strapi.dirs.app.root);
+    const prettierConfigFile = prettier.resolveConfigFile.sync(this.strapiRootPath);
     if (prettierConfigFile !== null) {
       return prettier.resolveConfig.sync(prettierConfigFile, { editorconfig: true }) as prettier.Options;
     }

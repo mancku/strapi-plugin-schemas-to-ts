@@ -1,4 +1,3 @@
-import { Strapi } from '@strapi/strapi';
 import { PluginConfig } from '../../models/pluginConfig';
 import { CommonHelpers } from '../commonHelpers';
 import { InterfaceBuilder } from "./interfaceBuilder";
@@ -6,9 +5,7 @@ import { PostV414InterfaceBuilder } from './postV414InterfaceBuilder';
 import { PreV414InterfaceBuilder } from './preV414InterfaceBuilder';
 
 export class InterfaceBuilderFactory {
-  public static getInterfaceBuilder(strapi: Strapi,
-    commonHelpers: CommonHelpers, config: PluginConfig): InterfaceBuilder {
-    const strapiVersion: string = this.getStrapiVersion(strapi);
+  public static getInterfaceBuilder(strapiVersion: string, commonHelpers: CommonHelpers, config: PluginConfig): InterfaceBuilder {
     commonHelpers.logger.debug(`Detected Strapi version ${strapiVersion} for interface building`);
     if (this.isStrapiVersionGreaterThanOrEqual(strapiVersion, '4.14')) {
       return new PostV414InterfaceBuilder(commonHelpers, config);
@@ -34,9 +31,5 @@ export class InterfaceBuilderFactory {
     }
 
     return true; // Versions are equal
-  }
-
-  private static getStrapiVersion(strapi: Strapi): string {
-    return strapi.config.info.strapi;
   }
 }

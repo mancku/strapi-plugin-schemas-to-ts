@@ -1,15 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import { LogLevel } from '../models/logLevel';
+import { StrapiPaths } from '../models/strapiPaths';
 import { CommonHelpers } from './commonHelpers';
 import { Logger } from './logger';
 
 export class FileHelpers {
-  private static readonly srcFolderPath = strapi.dirs.app.src;
-  private static readonly rootFolderPath = strapi.dirs.app.root;
-
-  public static ensureFolderPathExistRecursive(...subfolders: string[]): string {
-    let folder = this.srcFolderPath;
+  public static ensureFolderPathExistRecursive(srcFolderPath: string, ...subfolders: string[]): string {
+    let folder = srcFolderPath;
     for (const subfolder of subfolders) {
       folder = path.join(folder, subfolder);
       if (!fs.existsSync(folder)) {
@@ -72,20 +69,19 @@ export class FileHelpers {
     return relativePath === '' ? './' : relativePath;
   }
 
-  public static deleteUnnecessaryGeneratedInterfaces(logger?: Logger, filesToKeep?: string[]) {
-    if (!logger) {
-      logger = new Logger(LogLevel.Verbose);
-    }
+  public static deleteUnnecessaryGeneratedInterfaces(strapiPaths: StrapiPaths, logger: Logger, filesToKeep?: string[]) {
+    filesToKeep = filesToKeep ?? [];
 
     // Array of exact paths to exclude
     const excludedPaths: string[] = [
-      path.join(this.rootFolderPath, 'node_modules'),
-      path.join(this.rootFolderPath, 'public'),
-      path.join(this.rootFolderPath, 'database'),
-      path.join(this.rootFolderPath, 'dist'),
-      path.join(this.srcFolderPath, 'plugins'),
-      path.join(this.srcFolderPath, 'admin'),
+      path.join(strapiPaths.root, 'node_modules'),
+      path.join(strapiPaths.root, 'public'),
+      path.join(strapiPaths.root, 'database'),
+      path.join(strapiPaths.root, 'dist'),
+      path.join(strapiPaths.src, 'plugins'),
+      path.join(strapiPaths.src, 'admin'),
     ];
+    logger.verbose('excludedPaths', excludedPaths);
 
     // Function to recursively search for files
     function searchFiles(dir: string): void {
@@ -123,6 +119,6 @@ export class FileHelpers {
     }
 
     // Start the search
-    searchFiles(this.rootFolderPath);
+    searchFiles(strapiPaths.root);
   }
 }
