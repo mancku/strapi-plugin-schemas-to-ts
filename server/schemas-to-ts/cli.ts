@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { LogLevel } from '../models/logLevel';
 import { StrapiPaths } from '../models/strapiPaths';
+import { GenerateInterfacesCommand } from './cli-commands/generateInterfacesCommand';
 import { CommonHelpers } from './commonHelpers';
 import { FileHelpers } from './fileHelpers';
 import { Logger } from './logger';
@@ -20,8 +20,6 @@ yargs(hideBin(process.argv))
       });
     },
     (argv) => {
-      console.log('argv', argv);
-
       if (argv.strapiRootPath) {
         console.log(`Executing script at path: ${argv.strapiRootPath}`);
         const strapiPaths: StrapiPaths = StrapiPaths.fromRootPath(argv.strapiRootPath);
@@ -30,6 +28,11 @@ yargs(hideBin(process.argv))
         console.error('strapi-root-path parameter was missing');
       }
     }
+  ).command(
+    'generateInterfaces [strapi-root-path]',
+    'Description of the second command',
+    (yargs) => GenerateInterfacesCommand.configureCommand(yargs),
+    (argv) => GenerateInterfacesCommand.executeCommand(argv),
   )
   .demandCommand(1)
   .help()
