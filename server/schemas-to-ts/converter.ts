@@ -1,11 +1,11 @@
-import { Strapi } from '@strapi/strapi';
 import fs from 'fs';
 import { pascalCase } from "pascal-case";
 import path from 'path';
 import { PluginConfig } from '../models/pluginConfig';
+import { pluginName } from '../models/pluginName';
 import { SchemaInfo } from "../models/schemaInfo";
 import { SchemaSource } from '../models/schemaSource';
-import { pluginName } from '../register';
+import { StrapiPaths } from '../models/strapiPaths';
 import { CommonHelpers } from './commonHelpers';
 import { FileHelpers } from './fileHelpers';
 import { InterfaceBuilder } from './interface-builders/interfaceBuilder';
@@ -18,10 +18,10 @@ export class Converter {
   private readonly interfaceBuilder: InterfaceBuilder;
   private readonly config: PluginConfig;
 
-  constructor(strapi: Strapi, config: PluginConfig) {
+  constructor(config: PluginConfig, strapiVersion: string, private readonly strapiPaths: StrapiPaths) {
     this.config = config;
-    this.commonHelpers = new CommonHelpers(config);
-    this.interfaceBuilder = InterfaceBuilderFactory.getInterfaceBuilder(strapi, this.commonHelpers, config);
+    this.commonHelpers = new CommonHelpers(config, strapiPaths.root);
+    this.interfaceBuilder = InterfaceBuilderFactory.getInterfaceBuilder(strapiVersion, this.commonHelpers, config);
     this.commonHelpers.logger.verbose(`${pluginName} configuration`, this.config);
   }
 
@@ -37,8 +37,8 @@ export class Converter {
     this.setCommonInterfacesFolder();
 
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
-    const apiSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.api, SchemaSource.Api);
-    const componentSchemas: SchemaInfo[] = this.getSchemas(strapi.dirs.app.components, SchemaSource.Component, apiSchemas);
+    const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.api, SchemaSource.Api);
+    const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.components, SchemaSource.Component, apiSchemas);
     this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
 
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];
@@ -46,9 +46,13 @@ export class Converter {
       this.interfaceBuilder.convertSchemaToInterfaces(schema, schemas);
     }
 
+    const generatedInterfacesPaths: string[] = [];
     for (const schema of schemas) {
-      this.writeInterfacesFile(schema);
+      const filePath = this.writeInterfacesFile(schema);
+      generatedInterfacesPaths.push(filePath);
     }
+
+    FileHelpers.deleteUnnecessaryGeneratedInterfaces(this.strapiPaths, this.commonHelpers.logger, generatedInterfacesPaths);
   }
 
   /**
@@ -66,7 +70,7 @@ export class Converter {
   }
 
   private setCommonInterfacesFolder() {
-    this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive('common', this.config.commonInterfacesFolderName);
+    this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive(this.strapiPaths.src, 'common', this.config.commonInterfacesFolderName);
   }
 
   private getSchemas(folderPath: string, schemaSource: SchemaSource, apiSchemas?: SchemaInfo[]): SchemaInfo[] {
@@ -148,7 +152,7 @@ export class Converter {
     };
   }
 
-  private writeInterfacesFile(schema: SchemaInfo) {
+  private writeInterfacesFile(schema: SchemaInfo): string {
     const interfacesFileContent = this.interfaceBuilder.buildInterfacesFileContent(schema);
     const fileName: string = this.commonHelpers.getFileNameFromSchema(schema, true);
     let folderPath: string = '';
@@ -165,6 +169,6 @@ export class Converter {
         break;
     }
 
-    FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent, this.commonHelpers.logger);
+    return FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent, this.commonHelpers.logger);
   }
 }

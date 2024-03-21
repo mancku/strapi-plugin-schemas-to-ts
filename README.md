@@ -6,9 +6,14 @@ Strapi-Plugin-Schemas-to-TS is a plugin for **Strapi v4** that automatically **c
 - Automatically generates Typescript interfaces from Strapi schemas
 - Scans for new or updated Strapi schema files at each server start
 - Provides accurate Typescript interfaces based on your Strapi schema files
+- Automatically deletes interfaces generated in previous executions that are not valid anymore.
 
 ## How it works
-In every execution of the Strapi server, it reads all files containing schema definitions, both content types and components. Then generates Typescript interfaces based on those definitions. The interfaces will only be generated if they don't exist or if there have been changes. Otherwise they will be skipped, preventing the Strapi server to restart (in development) when modifying files.
+In every execution of the Strapi server, it reads all files containing schema definitions, both content types and components. Then generates Typescript interfaces based on those definitions. 
+
+The interfaces will only be generated if they don't exist or if there have been changes. Otherwise they will be skipped, preventing the Strapi server to restart (in development) when modifying files.
+
+At the end of the process will delete all interfaces generated in previous executions that are no longer valid, due for instace to a class or component being removed or renamed.
 
 ## How to set it up
 Here are the instructions to install and configure the package:
@@ -36,7 +41,8 @@ export default {
 }
 ```
 
-While the previous example is enough to get it working, there are 3 different properties that can be configured. Their default values are the ones in this example:
+While the previous example is enough to get it working, there are other properties that can be configured. Their default values are the ones in this example:
+
 ```typescript
 export default {
   // ...
@@ -44,9 +50,11 @@ export default {
     enabled: true,
     config: {
       acceptedNodeEnvs: ["development"],
-      commonInterfacesFolderName: "schemas-to-ts",
-      verboseLogs: false,
-      alwaysAddEnumSuffix: false
+      commonInterfacesFolderName: 'schemas-to-ts',
+      alwaysAddEnumSuffix: false,
+      alwaysAddComponentSuffix: false,
+      usePrettierIfAvailable: true,
+      logLevel: 2
     }
   },
   // ...
@@ -55,8 +63,16 @@ export default {
 
 - acceptedNodeEnvs ➡️ An array with all the environments (process.env.NODE_ENV) in which the interfaces will be generated.
 - commonInterfacesFolderName ➡️ The `common` interfaces (see below) will be generated in the `./src/common/{commonInterfacesFolderName}` folder. If there's no value assigned to this property, or in case the value is empty ("") it will use the default value, so it will be `./src/common/schemas-to-ts`.
-- verboseLogs ➡️ Set to true to get additional console logs during the execution of the plugin.
 - alwaysAddEnumSuffix ➡️ Set to true will generate all enums with an `Enum` suffix. For instance: `CarType` would become `CarTypeEnum`.
+- alwaysAddComponentSuffix ➡️ Set to true will generate all components with a `Component` suffix. For instance: `CarBrand` would become `CarBrandComponent`.
+- usePrettierIfAvailable: ➡️ Will look for prettier configuration in the Strapi root project and if available will apply that prettier configuration to the generated interfaces.
+- logLevel ➡️ Set the value of the log level:
+  - None = 0,
+  - Verbose = 1,
+  - Debug = 2,
+  - Information = 3,
+  - Error = 4
+  
 
 ## Interfaces sources
 There are 3 different interface sources: API, Component & Common.
@@ -82,7 +98,7 @@ Strapi enumeration attributes will be generated as typescript enums. However the
 - If the alwaysAddEnumSuffix is set to true, the enum will be generated as explained in the config description.
 - Same would happen if the enum name collides with any interface name generated from that schema.
 - Typescript enum options only allow letters and numbers in their name, so any other character would be eliminated, and vowels would be stripped off their accents.
-- There are many versions of Strapi that allows to have enum attributes in components with numeric values. As the values get converted to typescript enum options, a numeric one would nor be valid. To avoid that error, any time an enum option is numeric, it'll have an underscore as a prefix. 
+- There are many versions of Strapi that allows to have enum attributes in components with numeric values. As the values get converted to typescript enum options, a numeric one would nor be valid. To avoid that error, any time an enum option is numeric, it'll have an underscore as a prefix.
 
 Here's an example of the last two points:
 ```ts
@@ -97,6 +113,16 @@ export enum Year {
 - API interfaces will be created in the same folder as their schemas. The name of the file will be the same as the singular name property in the schema.
 - Components interfaces will be created in `src/components/{component collection name}/interfaces`. The `component collection name ` value is the folder where the component schema is located.
 - Common interfaces will be created inside `src/common/{commonInterfacesFolderName}`. The `commonInterfacesFolderName` value is a config property of this plugin.
+
+## CLI
+The Cli allows to execute some functions without the need to run Strapi. As the Cli has been added to the **scripts** and the **bin** sections of the **package.json**, it can be executed with `schemas-to-ts`.
+
+As it provides help, this command will print it out:
+> schemas-to-ts --help
+
+### Delete All Generated Files 
+This script is designed to delete all files that have a first line with the text '**// Interface automatically generated by schemas-to-ts**'. It requires a parameter called `strapi-root-path` indicating the first folder where it will begin deleting files recursively. For example:
+> schemas-to-ts deleteAllGeneratedFiles --strapi-root-path /path/to/strapi
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
