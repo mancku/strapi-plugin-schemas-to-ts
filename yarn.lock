@@ -1916,6 +1916,18 @@
   dependencies:
     "@types/node" "*"
 
+"@types/yargs-parser@*":
+  version "21.0.3"
+  resolved "https://registry.yarnpkg.com/@types/yargs-parser/-/yargs-parser-21.0.3.tgz#815e30b786d2e8f0dcd85fd5bcf5e1a04d008f15"
+  integrity sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==
+
+"@types/yargs@^17.0.32":
+  version "17.0.32"
+  resolved "https://registry.yarnpkg.com/@types/yargs/-/yargs-17.0.32.tgz#030774723a2f7faafebf645f4e5a48371dca6229"
+  integrity sha512-xQ67Yc/laOG5uMfX/093MRlGGCIBzZMarVa+gfNKJxWAIgykYpVGkBdbqEzGDDfCrVUj6Hiff4mTZ5BA6TmAog==
+  dependencies:
+    "@types/yargs-parser" "*"
+
 "@ucast/core@^1.0.0", "@ucast/core@^1.4.1", "@ucast/core@^1.6.1":
   version "1.10.2"
   resolved "https://registry.yarnpkg.com/@ucast/core/-/core-1.10.2.tgz#30b6b893479823265368e528b61b042f752f2c92"

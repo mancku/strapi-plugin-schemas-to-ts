@@ -31,6 +31,7 @@
     "@strapi/strapi": "^4.12.1",
     "@strapi/typescript-utils": "^4.12.1",
     "@types/prettier": "^2.7.2",
+    "@types/yargs": "^17.0.32",
     "rimraf": "^5.0.5",
     "typescript": "5.1.6"
   },
