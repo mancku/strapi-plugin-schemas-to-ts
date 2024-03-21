@@ -85,8 +85,7 @@ export class FileHelpers {
 
     // Function to recursively search for files
     function searchFiles(dir: string): void {
-      logger.verbose('path.resolve(dir)', path.resolve(dir));
-      logger.verbose('path.basename(dir)', path.basename(dir));
+      logger.verbose('Looking for files to delete in ', path.resolve(dir));
 
       // Skip the directory if it's in the excluded paths or begins with '.' (.git, .cache, .vscode...)
       if (excludedPaths.includes(path.resolve(dir)) || path.basename(dir).startsWith('.')) {
