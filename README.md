@@ -6,9 +6,14 @@ Strapi-Plugin-Schemas-to-TS is a plugin for **Strapi v4** that automatically **c
 - Automatically generates Typescript interfaces from Strapi schemas
 - Scans for new or updated Strapi schema files at each server start
 - Provides accurate Typescript interfaces based on your Strapi schema files
+- Automatically deletes interfaces generated in previous executions that are not valid anymore.
 
 ## How it works
-In every execution of the Strapi server, it reads all files containing schema definitions, both content types and components. Then generates Typescript interfaces based on those definitions. The interfaces will only be generated if they don't exist or if there have been changes. Otherwise they will be skipped, preventing the Strapi server to restart (in development) when modifying files.
+In every execution of the Strapi server, it reads all files containing schema definitions, both content types and components. Then generates Typescript interfaces based on those definitions. 
+
+The interfaces will only be generated if they don't exist or if there have been changes. Otherwise they will be skipped, preventing the Strapi server to restart (in development) when modifying files.
+
+At the end of the process will delete all interfaces generated in previous executions that are no longer valid, due for instace to a class or component being removed or renamed.
 
 ## How to set it up
 Here are the instructions to install and configure the package:
