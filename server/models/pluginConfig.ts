@@ -1,4 +1,5 @@
 import { LogLevel } from './logLevel';
+import { pluginName } from './pluginName';
 
 export interface PluginConfig {
   acceptedNodeEnvs: string[];
@@ -8,3 +9,12 @@ export interface PluginConfig {
   usePrettierIfAvailable: boolean;
   logLevel: LogLevel
 }
+
+export const defaultPluginConfig: PluginConfig = {
+  acceptedNodeEnvs: ["development"],
+  commonInterfacesFolderName: pluginName,
+  alwaysAddEnumSuffix: false,
+  alwaysAddComponentSuffix: false,
+  usePrettierIfAvailable: true,
+  logLevel: LogLevel.Debug
+};
