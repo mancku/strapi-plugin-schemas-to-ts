@@ -5,15 +5,30 @@ import { LogLevel } from "../../models/logLevel";
 import { PluginConfig, defaultPluginConfig } from "../../models/pluginConfig";
 import { StrapiPaths } from "../../models/strapiPaths";
 import { Converter } from "../converter";
+import { SharedCommandsConfiguration } from "./sharedCommandsConfiguration";
+
+type GenerateInterfaceArguments = {
+  "strapi-root-path": string;
+} & {
+  acceptedNodeEnvs: string[] | (string | number)[];
+} & {
+  commonInterfacesFolderName: string;
+} & {
+  alwaysAddEnumSuffix: boolean;
+} & {
+  alwaysAddComponentSuffix: boolean;
+} & {
+  usePrettierIfAvailable: boolean;
+} & {
+  logLevel: string;
+};
+
+type GenerateInterfaceConfiguration = yargs.Argv<GenerateInterfaceArguments>;
 
 export class GenerateInterfacesCommand {
-  public static configureCommand(yargs: yargs.Argv<{}>): void | yargs.Argv<{ "strapi-root-path": string; } & { acceptedNodeEnvs: string[] | (string | number)[]; } & { commonInterfacesFolderName: string; } & { alwaysAddEnumSuffix: boolean; } & { alwaysAddComponentSuffix: boolean; } & { usePrettierIfAvailable: boolean; } & { logLevel: string; }> | PromiseLike<yargs.Argv<{ "strapi-root-path": string; } & { acceptedNodeEnvs: string[] | (string | number)[]; } & { commonInterfacesFolderName: string; } & { alwaysAddEnumSuffix: boolean; } & { alwaysAddComponentSuffix: boolean; } & { usePrettierIfAvailable: boolean; } & { logLevel: string; }>> {
+  public static configureCommand(yargs: yargs.Argv<{}>): void | GenerateInterfaceConfiguration | PromiseLike<GenerateInterfaceConfiguration> {
     return yargs
-      .option('strapi-root-path', {
-        describe: 'Path to the Strapi project root',
-        type: 'string',
-        demandOption: true,
-      })
+      .option('strapi-root-path', SharedCommandsConfiguration.strapiRootPathConfiguration())
       .option('acceptedNodeEnvs', {
         alias: 'ne',
         describe: 'Accepted Node environments',
@@ -44,38 +59,15 @@ export class GenerateInterfacesCommand {
         type: 'boolean',
         default: defaultPluginConfig.usePrettierIfAvailable,
       })
-      .option('logLevel', {
-        alias: 'l',
-        describe: 'Set the log level',
-        type: 'string',
-        choices: [
-          LogLevel[LogLevel.None],
-          LogLevel[LogLevel.Verbose],
-          LogLevel[LogLevel.Debug],
-          LogLevel[LogLevel.Information],
-          LogLevel[LogLevel.Error]
-        ],
-        default: LogLevel[defaultPluginConfig.logLevel],
-      });
+      .option('logLevel', SharedCommandsConfiguration.logLevelConfiguration());
   }
 
-  public static executeCommand(argv: yargs.ArgumentsCamelCase<{ "strapi-root-path": string; } & { acceptedNodeEnvs: string[] | (string | number)[]; } & { commonInterfacesFolderName: string; } & { alwaysAddEnumSuffix: boolean; } & { alwaysAddComponentSuffix: boolean; } & { usePrettierIfAvailable: boolean; } & { logLevel: string; }>): void {
+  public static executeCommand(argv: yargs.ArgumentsCamelCase<GenerateInterfaceArguments>): void {
+    console.log(argv);
     if (argv.strapiRootPath) {
-      if (!Array.isArray(argv.acceptedNodeEnvs)) {
-        argv.acceptedNodeEnvs = new Array<string>();
-      }
-
-      argv.acceptedNodeEnvs = argv.acceptedNodeEnvs
-        .flatMap(item => item.split(','));
-
-      // If the execution doesn't have an environment, the empty one must be accepted
-      argv.acceptedNodeEnvs.push('');
-
-      // Only different values will be accepted
-      argv.acceptedNodeEnvs = _.uniq(argv.acceptedNodeEnvs);
-
+      const acceptedNodeEnvs: string[] = GenerateInterfacesCommand.curateAcceptedNodeEnvs(argv);
       const config: PluginConfig = {
-        acceptedNodeEnvs: argv.acceptedNodeEnvs as string[],
+        acceptedNodeEnvs: acceptedNodeEnvs,
         alwaysAddComponentSuffix: argv.alwaysAddComponentSuffix,
         alwaysAddEnumSuffix: argv.alwaysAddEnumSuffix,
         commonInterfacesFolderName: argv.commonInterfacesFolderName,
@@ -84,8 +76,7 @@ export class GenerateInterfacesCommand {
       };
 
       const strapiPaths: StrapiPaths = StrapiPaths.fromRootPath(argv.strapiRootPath);
-      const packageJson = require(path.join(strapiPaths.root, './package.json'));
-      const libraryVersion = packageJson.dependencies['@strapi/strapi'];
+      const libraryVersion = GenerateInterfacesCommand.getStrapiVersion(strapiPaths);
       const converter = new Converter(config, libraryVersion, strapiPaths);
       converter.SchemasToTs();
     } else {
@@ -93,4 +84,26 @@ export class GenerateInterfacesCommand {
     }
   }
 
+  private static getStrapiVersion(strapiPaths: StrapiPaths) {
+    const packageJson = require(path.join(strapiPaths.root, './package.json'));
+    const libraryVersion = packageJson.dependencies['@strapi/strapi'];
+    return libraryVersion;
+  }
+
+  private static curateAcceptedNodeEnvs(argv: yargs.ArgumentsCamelCase<GenerateInterfaceArguments>): string[] {
+    if (!Array.isArray(argv.acceptedNodeEnvs)) {
+      argv.acceptedNodeEnvs = new Array<string>();
+    }
+
+    argv.acceptedNodeEnvs = argv.acceptedNodeEnvs
+      .flatMap((item: string) => item.split(','));
+
+    // If the execution doesn't have an environment, the empty one must be accepted
+    argv.acceptedNodeEnvs.push('');
+
+    // Only different values will be accepted
+    argv.acceptedNodeEnvs = _.uniq(argv.acceptedNodeEnvs);
+
+    return argv.acceptedNodeEnvs as string[];
+  }
 }
