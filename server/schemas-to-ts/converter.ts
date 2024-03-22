@@ -61,8 +61,8 @@ export class Converter {
   * Adjusts the names of component schemas to avoid name collisions. If a component schema name conflicts with
   * any name in the API schemas or among other component schemas, it is modified to ensure uniqueness. This
   * modification involves appending 'Component' to the name if required by the configuration or if there's a name
-  * collision. Additionally, if a name collision is detected within the component schemas themselves, further
-  * adjustments are made to ensure all names are unique.
+  * collision. Additionally, if a name collision is detected within the component schemas themselves, the name of 
+  * the component is appended to the name of the group to which it belongs to.
   * 
   * @private
   * @param {SchemaInfo[]} componentSchemas - An array of schemas representing the components, where each schema
