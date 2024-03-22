@@ -284,15 +284,8 @@ export abstract class InterfaceBuilder {
       // Component
       // -------------------------------------------------
       else if (attributeValue.type === 'component') {
-        propertyType =
-          attributeValue.target === 'plugin::users-permissions.user'
-            ? 'User'
-            : pascalCase(attributeValue.component.split('.')[1]);
-
-        const componentInfo: SchemaInfo = this.getAttributeComponentInfo(propertyType, allSchemas);
-        if (componentInfo.needsComponentSuffix) {
-          propertyType += 'Component';
-        }
+        const componentInfo: SchemaInfo = this.getAttributeComponentSchema(attributeValue.component, allSchemas);
+        propertyType = componentInfo.pascalName;
 
         if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
           propertyType += plainClassSuffix;
@@ -486,22 +479,8 @@ export abstract class InterfaceBuilder {
     };
   }
 
-  /**
-   * When looking for the schema info of the attribute of a component, it is necessary to look for it with 
-   * the Component suffix and without it.
-   * A component name could end with the word 'Component' but not needing the suffix, so in this case the function
-   * `isComponentWithoutSuffix` would return true.
-   */
-  private getAttributeComponentInfo(propertyType: string, allSchemas: SchemaInfo[]): SchemaInfo {
-    function isComponentWithoutSuffix(schemaInfo: SchemaInfo): unknown {
-      return !schemaInfo.needsComponentSuffix && schemaInfo.pascalName === propertyType;
-    }
-    function isComponentWithSuffix(schemaInfo: SchemaInfo): unknown {
-      return schemaInfo.needsComponentSuffix && schemaInfo.pascalName === `${propertyType}Component`;
-    }
-
-    return allSchemas.find(schemaInfo => schemaInfo.source === SchemaSource.Component &&
-      (isComponentWithoutSuffix(schemaInfo) || isComponentWithSuffix(schemaInfo)));
+  private getAttributeComponentSchema(propertyType: string, allSchemas: SchemaInfo[]): SchemaInfo {
+    return allSchemas.find(schemaInfo => schemaInfo.componentFullName === propertyType);
   }
 
   private getInterfaceName(schemaInfo: SchemaInfo, schemaType: SchemaType) {

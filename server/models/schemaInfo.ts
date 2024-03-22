@@ -6,7 +6,7 @@ export interface SchemaInfo {
   schema: any;
   schemaName: string;
   pascalName: string;
-  needsComponentSuffix: boolean;
+  componentFullName: string;
   source: SchemaSource;
   interfaceAsText: string;
   plainInterfaceAsText: string;
@@ -22,7 +22,7 @@ const defaultSchemaInfo: SchemaInfo = {
   schema: undefined,
   schemaName: '',
   pascalName: '',
-  needsComponentSuffix: false,
+  componentFullName: '',
   source: SchemaSource.Common,
   interfaceAsText: '',
   plainInterfaceAsText: '',

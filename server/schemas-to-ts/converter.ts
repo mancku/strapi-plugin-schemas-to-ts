@@ -17,6 +17,8 @@ export class Converter {
   private readonly commonHelpers: CommonHelpers;
   private readonly interfaceBuilder: InterfaceBuilder;
   private readonly config: PluginConfig;
+  private readonly checkedComponentFolders: Set<string> = new Set();
+
 
   constructor(config: PluginConfig, strapiVersion: string, private readonly strapiPaths: StrapiPaths) {
     this.config = config;
@@ -39,7 +41,7 @@ export class Converter {
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
     const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.api, SchemaSource.Api);
     const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.components, SchemaSource.Component, apiSchemas);
-    this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
+    this.adjustComponentsWhoseNamesWouldCollide(componentSchemas, apiSchemas);
 
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];
     for (const schema of schemas.filter(x => x.source !== SchemaSource.Common)) {
@@ -56,18 +58,59 @@ export class Converter {
   }
 
   /**
-  * A component could need the suffix and the by having it, it would end up with the same name as another one that didn't need it
-    but whose name had the word 'Component' at the end
+  * Adjusts the names of component schemas to avoid name collisions. If a component schema name conflicts with
+  * any name in the API schemas or among other component schemas, it is modified to ensure uniqueness. This
+  * modification involves appending 'Component' to the name if required by the configuration or if there's a name
+  * collision. Additionally, if a name collision is detected within the component schemas themselves, further
+  * adjustments are made to ensure all names are unique.
+  * 
+  * @private
+  * @param {SchemaInfo[]} componentSchemas - An array of schemas representing the components, where each schema
+  *                                          has a 'pascalName' and 'componentFullName' property.
+  * @param {SchemaInfo[]} apiSchemas - An array of schemas representing the API, where each schema has a
+  *                                    'pascalName' property. These names are checked against the component
+  *                                    schema names to identify potential collisions.
   */
-  private adjustComponentsWhoseNamesWouldCollide(componentSchemas: SchemaInfo[]) {
-    for (const componentSchema of componentSchemas.filter(x => x.needsComponentSuffix)) {
-      const component: SchemaInfo = componentSchemas.find(x => x.pascalName === componentSchema.pascalName && !x.needsComponentSuffix);
-      if (component) {
-        component.needsComponentSuffix = true;
-        component.pascalName += 'Component';
+  private adjustComponentsWhoseNamesWouldCollide(componentSchemas: SchemaInfo[], apiSchemas: SchemaInfo[]) {
+    type ComponentNamingStatus = {
+      hasDuplicate: boolean;
+      needsComponentSuffix: boolean;
+    };
+
+    const encounteredNames: Record<string, ComponentNamingStatus> = {};
+
+    for (const schema of componentSchemas) {
+      const needsComponentSuffix: boolean = this.config.alwaysAddComponentSuffix
+        || apiSchemas?.some(x => x.pascalName === schema.pascalName);
+      if (needsComponentSuffix) {
+        schema.pascalName += 'Component';
+      }
+
+      if (encounteredNames[schema.pascalName] === undefined) {
+        encounteredNames[schema.pascalName] = { hasDuplicate: false, needsComponentSuffix: needsComponentSuffix };;
+      } else {
+        encounteredNames[schema.pascalName].hasDuplicate = true;
+        encounteredNames[schema.pascalName].needsComponentSuffix = encounteredNames[schema.pascalName].needsComponentSuffix
+          || needsComponentSuffix;
+      }
+    }
+
+    const duplicates = Object.entries(encounteredNames)
+      .filter(([_, namingStatus]) => namingStatus.hasDuplicate)
+      .map(([pascalName, _]) => pascalName);
+
+    for (const schema of componentSchemas) {
+      if (duplicates.includes(schema.pascalName)) {
+        const originalPascalName: string = schema.pascalName;
+        const componentFullName: string = schema.componentFullName.replaceAll('.', '-');
+        schema.pascalName = pascalCase(componentFullName);
+        if (encounteredNames[originalPascalName].needsComponentSuffix) {
+          schema.pascalName += "Component";
+        }
       }
     }
   }
+
 
   private setCommonInterfacesFolder() {
     this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive(this.strapiPaths.src, 'common', this.config.commonInterfacesFolderName);
@@ -108,6 +151,7 @@ export class Converter {
 
     let folder = '';
     let schemaName = '';
+    let componentNameInApiSchema = '';
 
     switch (schemaSource) {
       case SchemaSource.Api:
@@ -121,27 +165,26 @@ export class Converter {
       case SchemaSource.Component:
         let fileNameWithoutExtension = path.basename(file, path.extname(file));
         schemaName = fileNameWithoutExtension;
-        folder = path.join(path.dirname(file), this.componentInterfacesFolderName);
-        if (!FileHelpers.folderExists(folder)) {
-          fs.mkdirSync(folder);
+        folder = path.dirname(file);
+        const componentFolder: string = path.basename(folder);
+        const componentFolderFullPath: string = path.join(folder, this.componentInterfacesFolderName);
+        if (!this.checkedComponentFolders.has(componentFolderFullPath)) {
+          FileHelpers.ensureFolderPathExistRecursive(folder, this.componentInterfacesFolderName);
+          this.checkedComponentFolders.add(componentFolderFullPath);
         }
+        folder = componentFolderFullPath;
+        componentNameInApiSchema = `${componentFolder}.${schemaName}`;
         break;
     }
 
     let pascalName: string = pascalCase(schemaName);
-    let needsComponentSuffix: boolean = schemaSource === SchemaSource.Component &&
-      (this.config.alwaysAddComponentSuffix || apiSchemas?.some(x => x.pascalName === pascalName));
-    if (needsComponentSuffix) {
-      pascalName += 'Component';
-    }
-
     return {
       schemaPath: file,
       destinationFolder: folder,
       schema: schema,
       schemaName: schemaName,
       pascalName: pascalName,
-      needsComponentSuffix: needsComponentSuffix,
+      componentFullName: componentNameInApiSchema,
       source: schemaSource,
       interfaceAsText: '',
       plainInterfaceAsText: '',
