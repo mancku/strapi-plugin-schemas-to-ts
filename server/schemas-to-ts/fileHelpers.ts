@@ -5,6 +5,15 @@ import { CommonHelpers } from './commonHelpers';
 import { Logger } from './logger';
 
 export class FileHelpers {
+  public static normalizeWithoutTrailingSeparator(folderPath: string): string {
+    folderPath = path.normalize(folderPath);
+    if (folderPath.endsWith(path.sep)) {
+      folderPath = folderPath.slice(0, -1);
+    }
+
+    return folderPath;
+  }
+
   public static ensureFolderPathExistRecursive(srcFolderPath: string, ...subfolders: string[]): string {
     let folder = srcFolderPath;
     for (const subfolder of subfolders) {
