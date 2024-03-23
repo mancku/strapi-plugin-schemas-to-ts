@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { pascalCase } from "pascal-case";
 import path from 'path';
+import { DestinationPaths } from '../models/destinationPaths';
 import { PluginConfig } from '../models/pluginConfig';
 import { pluginName } from '../models/pluginName';
 import { SchemaInfo } from "../models/schemaInfo";
@@ -12,17 +13,17 @@ import { InterfaceBuilder } from './interface-builders/interfaceBuilder';
 import { InterfaceBuilderFactory } from './interface-builders/interfaceBuilderFactory';
 
 export class Converter {
-  private readonly componentInterfacesFolderName: string = 'interfaces';
-  private commonFolderModelsPath: string = '';
   private readonly commonHelpers: CommonHelpers;
   private readonly interfaceBuilder: InterfaceBuilder;
   private readonly config: PluginConfig;
+  private readonly destinationPaths: DestinationPaths;
 
   constructor(config: PluginConfig, strapiVersion: string, private readonly strapiPaths: StrapiPaths) {
     this.config = config;
     this.commonHelpers = new CommonHelpers(config, strapiPaths.root);
     this.interfaceBuilder = InterfaceBuilderFactory.getInterfaceBuilder(strapiVersion, this.commonHelpers, config);
     this.commonHelpers.logger.verbose(`${pluginName} configuration`, this.config);
+    this.destinationPaths = new DestinationPaths(config, strapiPaths);
   }
 
   public SchemasToTs(): void {
@@ -34,9 +35,7 @@ export class Converter {
       return;
     }
 
-    this.setCommonInterfacesFolder();
-
-    const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.commonFolderModelsPath);
+    const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.destinationPaths.commons);
     const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.api, SchemaSource.Api);
     const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.components, SchemaSource.Component, apiSchemas);
     this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
@@ -67,10 +66,6 @@ export class Converter {
         component.pascalName += 'Component';
       }
     }
-  }
-
-  private setCommonInterfacesFolder() {
-    this.commonFolderModelsPath = FileHelpers.ensureFolderPathExistRecursive(this.strapiPaths.src, 'common', this.config.commonInterfacesFolderName);
   }
 
   private getSchemas(folderPath: string, schemaSource: SchemaSource, apiSchemas?: SchemaInfo[]): SchemaInfo[] {
@@ -112,19 +107,16 @@ export class Converter {
     switch (schemaSource) {
       case SchemaSource.Api:
         schemaName = schema.info.singularName;
-        folder = path.dirname(file);
+        folder = this.destinationPaths.useForApisAndComponents ? this.destinationPaths.apis : path.dirname(file);
         break;
       case SchemaSource.Common:
         schemaName = schema.info.displayName;
-        folder = this.commonFolderModelsPath;
+        folder = this.destinationPaths.commons;
         break;
       case SchemaSource.Component:
         let fileNameWithoutExtension = path.basename(file, path.extname(file));
         schemaName = fileNameWithoutExtension;
-        folder = path.join(path.dirname(file), this.componentInterfacesFolderName);
-        if (!FileHelpers.folderExists(folder)) {
-          fs.mkdirSync(folder);
-        }
+        folder = this.destinationPaths.components;
         break;
     }
 
@@ -155,20 +147,6 @@ export class Converter {
   private writeInterfacesFile(schema: SchemaInfo): string {
     const interfacesFileContent = this.interfaceBuilder.buildInterfacesFileContent(schema);
     const fileName: string = this.commonHelpers.getFileNameFromSchema(schema, true);
-    let folderPath: string = '';
-    switch (schema.source) {
-      case SchemaSource.Common:
-        folderPath = this.commonFolderModelsPath;
-        break;
-      case SchemaSource.Component:
-        folderPath = schema.destinationFolder;
-        break;
-      case SchemaSource.Api:
-      default:
-        folderPath = schema.destinationFolder;
-        break;
-    }
-
-    return FileHelpers.writeInterfaceFile(folderPath, fileName, interfacesFileContent, this.commonHelpers.logger);
+    return FileHelpers.writeInterfaceFile(schema.destinationFolder, fileName, interfacesFileContent, this.commonHelpers.logger);
   }
 }
