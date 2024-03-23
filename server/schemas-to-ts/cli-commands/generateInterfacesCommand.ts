@@ -84,7 +84,7 @@ export class GenerateInterfacesCommand {
         destinationFolder: argv.destinationFolder,
       };
 
-      const strapiPaths: StrapiPaths = StrapiPaths.fromRootPath(argv.strapiRootPath);
+      const strapiPaths: StrapiPaths = new StrapiPaths(argv.strapiRootPath).buildFromRootPath();
       const libraryVersion = GenerateInterfacesCommand.getStrapiVersion(strapiPaths);
       const converter = new Converter(config, libraryVersion, strapiPaths);
       converter.SchemasToTs();

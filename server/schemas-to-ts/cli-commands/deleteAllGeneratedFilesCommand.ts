@@ -22,7 +22,7 @@ export class DeleteAllGeneratedFilesCommand {
   public static executeCommand(argv: yargs.ArgumentsCamelCase<DeleteAllGeneratedFilesArguments>): void {
     if (argv.strapiRootPath) {
       console.log(`Executing script at path: ${argv.strapiRootPath}`);
-      const strapiPaths: StrapiPaths = StrapiPaths.fromRootPath(argv.strapiRootPath);
+      const strapiPaths: StrapiPaths = new StrapiPaths(argv.strapiRootPath).buildFromRootPath();
       const logger: Logger = new Logger(LogLevel[argv.logLevel]);
       FileHelpers.deleteUnnecessaryGeneratedInterfaces(strapiPaths, logger);
     } else {
