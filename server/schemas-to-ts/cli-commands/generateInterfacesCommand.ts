@@ -21,6 +21,8 @@ type GenerateInterfaceArguments = {
   usePrettierIfAvailable: boolean;
 } & {
   logLevel: string;
+}& {
+  destinationFolder: string;
 };
 
 type GenerateInterfaceConfiguration = yargs.Argv<GenerateInterfaceArguments>;
@@ -59,7 +61,13 @@ export class GenerateInterfacesCommand {
         type: 'boolean',
         default: defaultPluginConfig.usePrettierIfAvailable,
       })
-      .option('logLevel', SharedCommandsConfiguration.logLevelConfiguration());
+      .option('logLevel', SharedCommandsConfiguration.logLevelConfiguration())
+      .option('destinationFolder', {
+        alias: 'if',
+        describe: 'Relative path (to the Strapi root one) of the folder where the interfaces need to be created. Empty for default.',
+        type: 'string',
+        default: defaultPluginConfig.destinationFolder,
+      });
   }
 
   public static executeCommand(argv: yargs.ArgumentsCamelCase<GenerateInterfaceArguments>): void {
@@ -73,6 +81,7 @@ export class GenerateInterfacesCommand {
         commonInterfacesFolderName: argv.commonInterfacesFolderName,
         usePrettierIfAvailable: argv.usePrettierIfAvailable,
         logLevel: LogLevel[argv.logLevel],
+        destinationFolder: argv.destinationFolder,
       };
 
       const strapiPaths: StrapiPaths = StrapiPaths.fromRootPath(argv.strapiRootPath);
