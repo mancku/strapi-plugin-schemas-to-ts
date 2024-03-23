@@ -107,7 +107,7 @@ export class Converter {
     switch (schemaSource) {
       case SchemaSource.Api:
         schemaName = schema.info.singularName;
-        folder = this.destinationPaths.useForApisAndComponents ? this.destinationPaths.apis : path.dirname(file);
+        folder = this.destinationPaths.useForApis ? this.destinationPaths.apis : path.dirname(file);
         break;
       case SchemaSource.Common:
         schemaName = schema.info.displayName;
