@@ -133,6 +133,25 @@ export abstract class InterfaceBuilder {
         updatedAt: Date;
       }
     }
+
+    export interface Media_Plain {
+      id: number;
+      name: string;
+      alternativeText: string;
+      caption: string;
+      width: number;
+      height: number;
+      formats: { thumbnail: MediaFormat; small: MediaFormat; medium: MediaFormat; large: MediaFormat; };
+      hash: string;
+      ext: string;
+      mime: string;
+      size: number;
+      url: string;
+      previewUrl: string;
+      provider: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }
     `);
 
     this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'AdminPanelRelationPropertyModification',
@@ -324,6 +343,11 @@ export abstract class InterfaceBuilder {
       // -------------------------------------------------
       else if (attributeValue.type === 'media') {
         propertyType = 'Media';
+
+        if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
+          propertyType += plainClassSuffix;
+        }
+        
         interfaceDependencies.push(propertyType);
 
         const bracketsIfArray = attributeValue.multiple ? '[]' : '';
@@ -470,6 +494,8 @@ export abstract class InterfaceBuilder {
       interfaceText += `${indentation}locale: string;\n`;
       if (schemaType === SchemaType.Standard) {
         interfaceText += `${indentation}localizations?: { data: ${schemaInfo.pascalName}[] };\n`;
+      } else if(schemaType === SchemaType.Plain) {
+        interfaceText += `${indentation}localizations?: ${schemaInfo.pascalName}${plainClassSuffix}[];\n`;
       } else {
         interfaceText += `${indentation}localizations?: ${schemaInfo.pascalName}[];\n`;
       }
