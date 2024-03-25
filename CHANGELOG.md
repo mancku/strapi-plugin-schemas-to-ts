@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0] - 2024-03-25
+### Changed
+- [Feature/choose destination folder](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/50)
+  - Added a feature to be able to choose the destination folder of the generated interfaces, through a config value.
+
+- [Commit 9de7b1fd89287d1411a1e7d07cc95bf9c58d1ea7](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/9de7b1fd89287d1411a1e7d07cc95bf9c58d1ea7)
+  - Modified to use an Strapi instance in the CLI for `generateInterfaces` command. That ensures all folders will be correct within the Strapi project.
+
 ## [1.2.0] - 2024-03-22
 ### Fixed
 - [fix: stop relations being all User[] if related model starts with User*](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/42)
