@@ -1,4 +1,7 @@
 # Strapi Plugin Schemas to TS
+![NPM Version](https://img.shields.io/npm/v/strapi-plugin-schemas-to-ts)
+![NPM Downloads](https://img.shields.io/npm/dw/strapi-plugin-schemas-to-ts)
+
 
 Strapi-Plugin-Schemas-to-TS is a plugin for **Strapi v4** that automatically **converts your Strapi schemas into Typescript interfaces**.
 
