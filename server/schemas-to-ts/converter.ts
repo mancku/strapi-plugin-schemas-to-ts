@@ -18,12 +18,12 @@ export class Converter {
   private readonly config: PluginConfig;
   private readonly destinationPaths: DestinationPaths;
 
-  constructor(config: PluginConfig, strapiVersion: string, private readonly strapiPaths: StrapiDirectories) {
+  constructor(config: PluginConfig, strapiVersion: string, private readonly strapiDirectories: StrapiDirectories) {
     this.config = config;
-    this.commonHelpers = new CommonHelpers(config, strapiPaths.app.root);
+    this.commonHelpers = new CommonHelpers(config, strapiDirectories.app.root);
     this.interfaceBuilder = InterfaceBuilderFactory.getInterfaceBuilder(strapiVersion, this.commonHelpers, config);
     this.commonHelpers.logger.verbose(`${pluginName} configuration`, this.config);
-    this.destinationPaths = new DestinationPaths(config, strapiPaths);
+    this.destinationPaths = new DestinationPaths(config, strapiDirectories);
   }
 
   public SchemasToTs(): void {
@@ -36,8 +36,8 @@ export class Converter {
     }
 
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.destinationPaths.commons);
-    const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.app.api, SchemaSource.Api);
-    const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.app.components, SchemaSource.Component, apiSchemas);
+    const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.api, SchemaSource.Api);
+    const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.components, SchemaSource.Component, apiSchemas);
     this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
 
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];
@@ -51,7 +51,7 @@ export class Converter {
       generatedInterfacesPaths.push(filePath);
     }
 
-    FileHelpers.deleteUnnecessaryGeneratedInterfaces(this.strapiPaths, this.commonHelpers.logger, generatedInterfacesPaths);
+    FileHelpers.deleteUnnecessaryGeneratedInterfaces(this.strapiDirectories, this.commonHelpers.logger, generatedInterfacesPaths);
   }
 
   /**
