@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.1] - 2024-03-25
+### Fixed
+- [Commit 185d707130003f870974d4b88b191df61aa792bf](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/185d707130003f870974d4b88b191df61aa792bf)
+  - Fixed error: Components folder path was not being set properly.
+
 ## [1.3.0] - 2024-03-25
 ### Changed
 - [Feature/choose destination folder](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/50)
