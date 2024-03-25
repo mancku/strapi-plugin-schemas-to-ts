@@ -1,3 +1,4 @@
+import { StrapiDirectories } from '@strapi/strapi';
 import fs from 'fs';
 import { pascalCase } from "pascal-case";
 import path from 'path';
@@ -6,7 +7,6 @@ import { PluginConfig } from '../models/pluginConfig';
 import { pluginName } from '../models/pluginName';
 import { SchemaInfo } from "../models/schemaInfo";
 import { SchemaSource } from '../models/schemaSource';
-import { StrapiPaths } from '../models/strapiPaths';
 import { CommonHelpers } from './commonHelpers';
 import { FileHelpers } from './fileHelpers';
 import { InterfaceBuilder } from './interface-builders/interfaceBuilder';
@@ -18,9 +18,9 @@ export class Converter {
   private readonly config: PluginConfig;
   private readonly destinationPaths: DestinationPaths;
 
-  constructor(config: PluginConfig, strapiVersion: string, private readonly strapiPaths: StrapiPaths) {
+  constructor(config: PluginConfig, strapiVersion: string, private readonly strapiPaths: StrapiDirectories) {
     this.config = config;
-    this.commonHelpers = new CommonHelpers(config, strapiPaths.root);
+    this.commonHelpers = new CommonHelpers(config, strapiPaths.app.root);
     this.interfaceBuilder = InterfaceBuilderFactory.getInterfaceBuilder(strapiVersion, this.commonHelpers, config);
     this.commonHelpers.logger.verbose(`${pluginName} configuration`, this.config);
     this.destinationPaths = new DestinationPaths(config, strapiPaths);
@@ -36,8 +36,8 @@ export class Converter {
     }
 
     const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.destinationPaths.commons);
-    const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.api, SchemaSource.Api);
-    const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.components, SchemaSource.Component, apiSchemas);
+    const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.app.api, SchemaSource.Api);
+    const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiPaths.app.components, SchemaSource.Component, apiSchemas);
     this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
 
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas];

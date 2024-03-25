@@ -1,10 +1,11 @@
+import { StrapiDirectories } from "@strapi/strapi";
 import _ from "lodash";
 import path from 'path';
 import yargs from "yargs";
 import { LogLevel } from "../../models/logLevel";
 import { PluginConfig, defaultPluginConfig } from "../../models/pluginConfig";
-import { StrapiPaths } from "../../models/strapiPaths";
 import { Converter } from "../converter";
+import { FileHelpers } from "../fileHelpers";
 import { SharedCommandsConfiguration } from "./sharedCommandsConfiguration";
 
 type GenerateInterfaceArguments = {
@@ -84,17 +85,17 @@ export class GenerateInterfacesCommand {
         destinationFolder: argv.destinationFolder,
       };
 
-      const strapiPaths: StrapiPaths = new StrapiPaths(argv.strapiRootPath).buildFromRootPath();
-      const libraryVersion = GenerateInterfacesCommand.getStrapiVersion(strapiPaths);
-      const converter = new Converter(config, libraryVersion, strapiPaths);
+      const strapiDirectories: StrapiDirectories = FileHelpers.buildStrapiDirectoriesFromRootPath(argv.strapiRootPath);
+      const libraryVersion = GenerateInterfacesCommand.getStrapiVersion(argv.strapiRootPath);
+      const converter = new Converter(config, libraryVersion, strapiDirectories);
       converter.SchemasToTs();
     } else {
       console.error('strapi-root-path parameter was missing');
     }
   }
 
-  private static getStrapiVersion(strapiPaths: StrapiPaths) {
-    const packageJson = require(path.join(strapiPaths.root, './package.json'));
+  private static getStrapiVersion(strapiRootPaths: string) {
+    const packageJson = require(path.join(strapiRootPaths, './package.json'));
     const libraryVersion = packageJson.dependencies['@strapi/strapi'];
     return libraryVersion;
   }
