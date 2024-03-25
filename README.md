@@ -54,7 +54,8 @@ export default {
       alwaysAddEnumSuffix: false,
       alwaysAddComponentSuffix: false,
       usePrettierIfAvailable: true,
-      logLevel: 2
+      logLevel: 2,
+      destinationFolder: undefined,
     }
   },
   // ...
@@ -72,6 +73,32 @@ export default {
   - Debug = 2,
   - Information = 3,
   - Error = 4
+- destinationFolder ➡️ Undefined by default, if it holds a value, it's expected to be a subfolder path within the Strapi folder. This folder will be the destination folder for all the generated interfaces. **If this option is set, it will superseed the one set in `commonInterfacesFolderName`**.
+  
+  Inside the destination folder, 3 subfolders will be created:
+  - **apis** will have all the interfaces generated from Content Types.
+  - **commons** will have all the common interfaces. See [Interfaces sources](#interfaces-sources)
+  - **components** will have a subfolder for each component group, and inside there will be the interfaces for each group.
+  
+  Also, a number of rules have been created to ensure the destination path is valid:
+  - The path must be inside the Strapi project that's being executed. That prevents things like setting './../../' as a path
+  - The path can't be the root folder of the Strapi project.
+  - The path can't be the src folder of the Strapi project.
+  - The path can't be any of this folders, nor can it be inside any of them:
+    - Strapi api folder
+    - Strapi components folder
+    - Strapi extensions folder
+    - Strapi policies folder
+    - Strapi middlewares folder
+    - Strapi config folder
+    - Strapi dist folder
+    - Strapi public folder for static files
+  
+  Apart from that, almost any text will be valid.
+  Some examples of valid values are:
+  - "src/common/schemas-to-ts"
+  - "generated-interfaces"
+  - "workspace/interfaces"
   
 
 ## Interfaces sources
@@ -150,6 +177,7 @@ This command generates TypeScript interfaces for your Strapi project. It allows 
 - **alwaysAddComponentSuffix** (Optional) ➡️ Whether to always add a component suffix to component names. Defaults to the plugin configuration.
 - **usePrettierIfAvailable** (Optional) ➡️ Whether to use Prettier for formatting if available. Defaults to the plugin configuration.
 - **logLevel** (Optional) ➡️ Sets the log level. Options are None, Verbose, Debug, Information, and Error. Defaults to the plugin configuration.
+- **destinationFolder** (Optional) ➡️ Sets the destination folder. Defaults to the plugin configuration.
 
 Examples:
 ```sh
@@ -158,6 +186,10 @@ schemas-to-ts generateInterfaces  --strapi-root-path /path/to/strapi
 
 ```sh
 schemas-to-ts generateInterfaces  --strapi-root-path /path/to/strapi --acceptedNodeEnvs staging development,test --commonInterfacesFolderName interfaces --alwaysAddEnumSuffix true --alwaysAddComponentSuffix false --usePrettierIfAvailable false --logLevel Information
+```
+
+```sh
+schemas-to-ts generateInterfaces  --strapi-root-path /path/to/strapi --acceptedNodeEnvs staging development,test --destinationFolder src/schemas-to-ts --alwaysAddEnumSuffix true --alwaysAddComponentSuffix false --usePrettierIfAvailable false --logLevel Information
 ```
 
 
