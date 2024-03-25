@@ -1,11 +1,8 @@
-import { StrapiDirectories } from "@strapi/strapi";
 import _ from "lodash";
-import path from 'path';
 import yargs from "yargs";
 import { LogLevel } from "../../models/logLevel";
 import { PluginConfig, defaultPluginConfig } from "../../models/pluginConfig";
 import { Converter } from "../converter";
-import { FileHelpers } from "../fileHelpers";
 import { SharedCommandsConfiguration } from "./sharedCommandsConfiguration";
 
 type GenerateInterfaceArguments = {
@@ -22,7 +19,7 @@ type GenerateInterfaceArguments = {
   usePrettierIfAvailable: boolean;
 } & {
   logLevel: string;
-}& {
+} & {
   destinationFolder: string;
 };
 
@@ -85,19 +82,13 @@ export class GenerateInterfacesCommand {
         destinationFolder: argv.destinationFolder,
       };
 
-      const strapiDirectories: StrapiDirectories = FileHelpers.buildStrapiDirectoriesFromRootPath(argv.strapiRootPath);
-      const libraryVersion = GenerateInterfacesCommand.getStrapiVersion(argv.strapiRootPath);
-      const converter = new Converter(config, libraryVersion, strapiDirectories);
+      const strapi = require("@strapi/strapi");
+      const app = strapi({ distDir: "./dist" });
+      const converter = new Converter(config, app.config.info.strapi, app.dirs);
       converter.SchemasToTs();
     } else {
       console.error('strapi-root-path parameter was missing');
     }
-  }
-
-  private static getStrapiVersion(strapiRootPaths: string) {
-    const packageJson = require(path.join(strapiRootPaths, './package.json'));
-    const libraryVersion = packageJson.dependencies['@strapi/strapi'];
-    return libraryVersion;
   }
 
   private static curateAcceptedNodeEnvs(argv: yargs.ArgumentsCamelCase<GenerateInterfaceArguments>): string[] {
