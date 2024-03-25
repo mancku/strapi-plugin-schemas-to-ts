@@ -107,7 +107,7 @@ export class Converter {
     switch (schemaSource) {
       case SchemaSource.Api:
         schemaName = schema.info.singularName;
-        folder = this.destinationPaths.useForApis ? this.destinationPaths.apis : path.dirname(file);
+        folder = this.destinationPaths.useForApisAndComponents ? this.destinationPaths.apis : path.dirname(file);
         break;
       case SchemaSource.Common:
         schemaName = schema.info.displayName;
@@ -116,7 +116,11 @@ export class Converter {
       case SchemaSource.Component:
         let fileNameWithoutExtension = path.basename(file, path.extname(file));
         schemaName = fileNameWithoutExtension;
-        folder = this.destinationPaths.components;
+        folder = path.dirname(file);
+        const componentFolder: string = path.basename(folder);
+        folder = this.destinationPaths.useForApisAndComponents
+          ? FileHelpers.ensureFolderPathExistRecursive(this.destinationPaths.components, componentFolder)
+          : FileHelpers.ensureFolderPathExistRecursive(folder, this.destinationPaths.componentInterfacesFolderName);
         break;
     }
 

@@ -8,10 +8,12 @@ export class DestinationPaths {
   public commons?: string;
   public apis?: string;
   public components?: string;
-  public readonly useForApis: boolean;
-
-  private readonly componentInterfacesFolderName: string = 'interfaces';
+  public readonly useForApisAndComponents: boolean;
+  public readonly componentInterfacesFolderName: string = 'interfaces';
+  
+  private readonly apisFolderName: string = 'api';
   private readonly commonFolderName: string = 'common';
+  private readonly componentsFolderName: string = 'components';
 
   constructor(config: PluginConfig, strapiPaths: StrapiDirectories) {
     let useDefaultFolders: boolean = true;
@@ -19,17 +21,16 @@ export class DestinationPaths {
     if (destinationFolder) {
       destinationFolder = this.getFinalDestinationFolder(destinationFolder, strapiPaths);
       this.commons = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.commonFolderName);
-      this.apis = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, 'api');
-      this.components = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, 'components');
+      this.apis = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.apisFolderName);
+      this.components = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.componentsFolderName);
       useDefaultFolders = false;
     }
 
     if (useDefaultFolders) {
-      this.components = FileHelpers.ensureFolderPathExistRecursive(strapiPaths.app.components, this.componentInterfacesFolderName);
       this.commons = FileHelpers.ensureFolderPathExistRecursive(strapiPaths.app.src, this.commonFolderName, config.commonInterfacesFolderName);
     }
 
-    this.useForApis = !!destinationFolder;
+    this.useForApisAndComponents = !!destinationFolder;
   }
 
   private getFinalDestinationFolder(destinationFolder: string, strapiPaths: StrapiDirectories) {
