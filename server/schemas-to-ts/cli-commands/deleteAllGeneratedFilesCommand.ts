@@ -1,6 +1,6 @@
+import { StrapiDirectories } from "@strapi/strapi";
 import yargs from "yargs";
 import { LogLevel } from "../../models/logLevel";
-import { StrapiPaths } from "../../models/strapiPaths";
 import { FileHelpers } from "../fileHelpers";
 import { Logger } from "../logger";
 import { SharedCommandsConfiguration } from "./sharedCommandsConfiguration";
@@ -22,9 +22,9 @@ export class DeleteAllGeneratedFilesCommand {
   public static executeCommand(argv: yargs.ArgumentsCamelCase<DeleteAllGeneratedFilesArguments>): void {
     if (argv.strapiRootPath) {
       console.log(`Executing script at path: ${argv.strapiRootPath}`);
-      const strapiPaths: StrapiPaths = StrapiPaths.fromRootPath(argv.strapiRootPath);
+      const strapiDirectories: StrapiDirectories = FileHelpers.buildStrapiDirectoriesFromRootPath(argv.strapiRootPath);
       const logger: Logger = new Logger(LogLevel[argv.logLevel]);
-      FileHelpers.deleteUnnecessaryGeneratedInterfaces(strapiPaths, logger);
+      FileHelpers.deleteUnnecessaryGeneratedInterfaces(strapiDirectories, logger);
     } else {
       console.error('strapi-root-path parameter was missing');
     }

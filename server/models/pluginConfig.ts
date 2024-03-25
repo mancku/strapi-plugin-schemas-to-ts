@@ -7,7 +7,8 @@ export interface PluginConfig {
   alwaysAddEnumSuffix: boolean;
   alwaysAddComponentSuffix: boolean;
   usePrettierIfAvailable: boolean;
-  logLevel: LogLevel
+  logLevel: LogLevel,
+  destinationFolder?: string;
 }
 
 export const defaultPluginConfig: PluginConfig = {
@@ -16,5 +17,6 @@ export const defaultPluginConfig: PluginConfig = {
   alwaysAddEnumSuffix: false,
   alwaysAddComponentSuffix: false,
   usePrettierIfAvailable: true,
-  logLevel: LogLevel.Debug
+  logLevel: LogLevel.Debug,
+  destinationFolder: undefined,
 };

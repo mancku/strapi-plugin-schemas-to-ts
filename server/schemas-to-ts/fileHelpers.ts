@@ -1,10 +1,19 @@
+import { StrapiDirectories } from '@strapi/strapi';
 import fs from 'fs';
 import path from 'path';
-import { StrapiPaths } from '../models/strapiPaths';
 import { CommonHelpers } from './commonHelpers';
 import { Logger } from './logger';
 
 export class FileHelpers {
+  public static normalizeWithoutTrailingSeparator(folderPath: string): string {
+    folderPath = path.normalize(folderPath);
+    if (folderPath.endsWith(path.sep)) {
+      folderPath = folderPath.slice(0, -1);
+    }
+
+    return folderPath;
+  }
+
   public static ensureFolderPathExistRecursive(srcFolderPath: string, ...subfolders: string[]): string {
     let folder = srcFolderPath;
     for (const subfolder of subfolders) {
@@ -69,17 +78,17 @@ export class FileHelpers {
     return relativePath === '' ? './' : relativePath;
   }
 
-  public static deleteUnnecessaryGeneratedInterfaces(strapiPaths: StrapiPaths, logger: Logger, filesToKeep?: string[]) {
+  public static deleteUnnecessaryGeneratedInterfaces(strapiDirectories: StrapiDirectories, logger: Logger, filesToKeep?: string[]) {
     filesToKeep = filesToKeep ?? [];
 
     // Array of exact paths to exclude
     const excludedPaths: string[] = [
-      path.join(strapiPaths.root, 'node_modules'),
-      path.join(strapiPaths.root, 'public'),
-      path.join(strapiPaths.root, 'database'),
-      path.join(strapiPaths.root, 'dist'),
-      path.join(strapiPaths.src, 'plugins'),
-      path.join(strapiPaths.src, 'admin'),
+      path.join(strapiDirectories.app.root, 'node_modules'),
+      path.join(strapiDirectories.app.root, 'public'),
+      path.join(strapiDirectories.app.root, 'database'),
+      path.join(strapiDirectories.app.root, 'dist'),
+      path.join(strapiDirectories.app.src, 'plugins'),
+      path.join(strapiDirectories.app.src, 'admin'),
     ];
     logger.verbose('excludedPaths', excludedPaths);
 
@@ -118,6 +127,36 @@ export class FileHelpers {
     }
 
     // Start the search
-    searchFiles(strapiPaths.root);
+    searchFiles(strapiDirectories.app.root);
+  }
+
+  public static buildStrapiDirectoriesFromRootPath(strapiRootPath: string): StrapiDirectories {
+    strapiRootPath = this.normalizeWithoutTrailingSeparator(strapiRootPath);
+    const srcPath: string = path.join(strapiRootPath, 'src');
+    return {
+      dist: {
+        root: path.join(strapiRootPath, "dist"),
+        src: undefined,
+        api: undefined,
+        components: undefined,
+        extensions: undefined,
+        policies: undefined,
+        middlewares: undefined,
+        config: undefined,
+      },
+      app: {
+        root: strapiRootPath,
+        src: srcPath,
+        api: path.join(srcPath, "api"),
+        components: path.join(srcPath, "components"),
+        extensions: path.join(srcPath, "extensions"),
+        policies: path.join(srcPath, "policies"),
+        middlewares: path.join(srcPath, "middlewares"),
+        config: path.join(strapiRootPath, "config"),
+      },
+      static: {
+        public: path.join(strapiRootPath, "public"),
+      }
+    }
   }
 }
