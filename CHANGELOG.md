@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.2] - 2024-03-27
+### Fixed
+- [fix: plain variant for localizations and media](https://github.com/mancku/strapi-plugin-schemas-to-ts/pull/49)
+  - Improved the interface builder to have Media_Plain and also '_Plain' relations in the locales.
+
 ## [1.3.1] - 2024-03-25
 ### Fixed
 - [Commit 185d707130003f870974d4b88b191df61aa792bf](https://github.com/mancku/strapi-plugin-schemas-to-ts/commit/185d707130003f870974d4b88b191df61aa792bf)
