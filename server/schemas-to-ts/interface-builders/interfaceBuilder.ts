@@ -21,6 +21,9 @@ export abstract class InterfaceBuilder {
 
   public convertSchemaToInterfaces(schema: SchemaInfo, schemas: SchemaInfo[]) {
     this.commonHelpers.logger.debug('Converting schema', schema.schemaPath);
+    if (schema.source === SchemaSource.Extension && schema.schema.attributes.role) {
+      delete schema.schema.attributes.role;
+    }
     this.convertToInterface(schema, schemas, SchemaType.Standard);
     this.convertToInterface(schema, schemas, SchemaType.Plain);
     this.convertToInterface(schema, schemas, SchemaType.NoRelations);
@@ -56,7 +59,7 @@ export abstract class InterfaceBuilder {
     return interfacesFileContent;
   }
 
-  public generateCommonSchemas(commonFolderModelsPath: string): SchemaInfo[] {
+  public generateCommonSchemas(commonFolderModelsPath: string, extensionFolderModelsPath?: string): SchemaInfo[] {
     const commonSchemas: SchemaInfo[] = [];
     this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'Payload',
       `export interface Payload<T> {
@@ -72,10 +75,29 @@ export abstract class InterfaceBuilder {
     }
     `);
 
-    this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'User',
-      `export interface User {
-      id: number;
-      attributes: {
+    if (extensionFolderModelsPath && FileHelpers.folderExists(`${extensionFolderModelsPath}/users-permissions/content-types/user`)) {
+      this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'User',
+        `import {FullUser, FullUser_Plain, FullUser_NoRelations} from "../../extensions/users-permissions/content-types/user/FullUser";
+        export interface User extends FullUser {}`,`
+        export interface User_Plain extends FullUser_Plain {}
+        export interface User_NoRelations extends FullUser_NoRelations {}
+    `);
+    } else {
+      this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'User',
+        `export interface User {
+        id: number;
+        attributes: {
+          username: string;
+          email: string;
+          provider: string;
+          confirmed: boolean;
+          blocked: boolean;
+          createdAt: Date;
+          updatedAt: Date;
+        }
+      }
+      `, `export interface User_Plain {
+        id: number;
         username: string;
         email: string;
         provider: string;
@@ -84,18 +106,8 @@ export abstract class InterfaceBuilder {
         createdAt: Date;
         updatedAt: Date;
       }
-    }
-    `, `export interface User_Plain {
-      id: number;
-      username: string;
-      email: string;
-      provider: string;
-      confirmed: boolean;
-      blocked: boolean;
-      createdAt: Date;
-      updatedAt: Date;
-    }
     `);
+    }
 
     this.addCommonSchema(commonSchemas, commonFolderModelsPath, 'MediaFormat',
       `export interface MediaFormat {
@@ -201,7 +213,7 @@ export abstract class InterfaceBuilder {
       }
 
 
-      // When a schema name is not single-worded in Strapi, it will have a hyphen between each pair of words, 
+      // When a schema name is not single-worded in Strapi, it will have a hyphen between each pair of words,
       // so the import path would be different from the pascal name.
       // This is why it is needed to also compare with the schema name.
       if (dependency !== schemaInfo.pascalName &&
@@ -241,12 +253,12 @@ export abstract class InterfaceBuilder {
     const interfaceDependencies: string[] = [];
 
     let interfaceText = `export interface ${interfaceName} {\n`;
-    if (schemaInfo.source === SchemaSource.Api) {
+    if (schemaInfo.source === SchemaSource.Api || schemaInfo.source === SchemaSource.Extension) {
       interfaceText += `  id: number;\n`;
     }
 
     let indentation = '  ';
-    if (schemaInfo.source === SchemaSource.Api && schemaType === SchemaType.Standard) {
+    if ((schemaInfo.source === SchemaSource.Api || schemaInfo.source === SchemaSource.Extension) && schemaType === SchemaType.Standard) {
       interfaceText += `  attributes: {\n`;
       indentation += '  ';
     }
@@ -291,7 +303,7 @@ export abstract class InterfaceBuilder {
         } else if (schemaType === SchemaType.NoRelations) {
           propertyDefinition = `${indentation}${propertyName}: number${bracketsIfArray};\n`;
         } else if (schemaType === SchemaType.AdminPanelLifeCycle) {
-          // AdminPanelRelationPropertyModification would never be an array, for it contains the arrays. 
+          // AdminPanelRelationPropertyModification would never be an array, for it contains the arrays.
           propertyDefinition = `${indentation}${propertyName}: AdminPanelRelationPropertyModification<${propertyType}>;\n`;
           interfaceDependencies.push('AdminPanelRelationPropertyModification');
         }
@@ -347,7 +359,7 @@ export abstract class InterfaceBuilder {
         if (schemaType === SchemaType.Plain || schemaType === SchemaType.AdminPanelLifeCycle) {
           propertyType += plainClassSuffix;
         }
-        
+
         interfaceDependencies.push(propertyType);
 
         const bracketsIfArray = attributeValue.multiple ? '[]' : '';
@@ -500,7 +512,7 @@ export abstract class InterfaceBuilder {
         interfaceText += `${indentation}localizations?: ${schemaInfo.pascalName}[];\n`;
       }
     }
-    if (schemaInfo.source === SchemaSource.Api && schemaType === SchemaType.Standard) {
+    if ((schemaInfo.source === SchemaSource.Api || schemaInfo.source === SchemaSource.Extension) && schemaType === SchemaType.Standard) {
       interfaceText += `  };\n`;
     }
 
@@ -513,7 +525,7 @@ export abstract class InterfaceBuilder {
   }
 
   /**
-   * When looking for the schema info of the attribute of a component, it is necessary to look for it with 
+   * When looking for the schema info of the attribute of a component, it is necessary to look for it with
    * the Component suffix and without it.
    * A component name could end with the word 'Component' but not needing the suffix, so in this case the function
    * `isComponentWithoutSuffix` would return true.
