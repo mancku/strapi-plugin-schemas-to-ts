@@ -8,12 +8,14 @@ export class DestinationPaths {
   public commons?: string;
   public apis?: string;
   public components?: string;
+  public extensions?: string;
   public readonly useForApisAndComponents: boolean;
   public readonly componentInterfacesFolderName: string = 'interfaces';
-  
+
   private readonly apisFolderName: string = 'api';
   private readonly commonFolderName: string = 'common';
   private readonly componentsFolderName: string = 'components';
+  private readonly extensionsFolderName: string = 'extensions';
 
   constructor(config: PluginConfig, strapiPaths: StrapiDirectories) {
     let useDefaultFolders: boolean = true;
@@ -23,11 +25,13 @@ export class DestinationPaths {
       this.commons = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.commonFolderName);
       this.apis = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.apisFolderName);
       this.components = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.componentsFolderName);
+      this.extensions = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.extensionsFolderName);
       useDefaultFolders = false;
     }
 
     if (useDefaultFolders) {
       this.commons = FileHelpers.ensureFolderPathExistRecursive(strapiPaths.app.src, this.commonFolderName, config.commonInterfacesFolderName);
+      this.extensions = FileHelpers.ensureFolderPathExistRecursive(strapiPaths.app.src, this.extensionsFolderName);
     }
 
     this.useForApisAndComponents = !!destinationFolder;
@@ -68,35 +72,35 @@ export class DestinationPaths {
     if (destinationFolder=== strapiPaths.app.src) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is the same as the Strapi src`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.app.api)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi api`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.app.components)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi components`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.app.extensions)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi extensions`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.app.policies)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi policies`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.app.middlewares)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi middlewares`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.app.config)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi config`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.dist.root)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi dist`);
     }
-    
+
     if (destinationFolder.startsWith(strapiPaths.static.public)) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is inside the Strapi static`);
     }
