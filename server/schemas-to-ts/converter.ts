@@ -35,10 +35,10 @@ export class Converter {
       return;
     }
 
-    const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.destinationPaths.commons, this.destinationPaths.extensions);
+    const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.destinationPaths.commons, this.strapiDirectories.app.extensions);
     const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.api, SchemaSource.Api);
     const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.components, SchemaSource.Component, apiSchemas);
-    const extensionSchemas: SchemaInfo[] = this.getSchemas(this.destinationPaths.extensions, SchemaSource.Extension);
+    const extensionSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.extensions, SchemaSource.Extension);
     this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
 
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas, ...extensionSchemas];
@@ -115,8 +115,14 @@ export class Converter {
         folder = this.destinationPaths.commons;
         break;
       case SchemaSource.Extension:
-        schemaName = `Full${schema?.info.displayName}`;
-        folder = this.destinationPaths.useForApisAndComponents ? this.destinationPaths.extensions : path.dirname(file);
+        if (schema?.info.displayName === 'User') {
+          folder = this.destinationPaths.commons;
+        } else {
+          folder = this.destinationPaths.useForApisAndComponents
+          ? FileHelpers.ensureFolderPathExistRecursive(this.config.destinationFolder, this.destinationPaths.extensionsFolderName)
+          : path.dirname(file);
+        }
+        schemaName = schema?.info.displayName;
         break;
       case SchemaSource.Component:
         let fileNameWithoutExtension = path.basename(file, path.extname(file));
