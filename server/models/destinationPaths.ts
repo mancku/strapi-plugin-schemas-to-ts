@@ -9,32 +9,31 @@ export class DestinationPaths {
   public apis?: string;
   public components?: string;
   public extensions?: string;
-  public readonly useForApisAndComponents: boolean;
+  public readonly useCustomDestinationFolder: boolean;
   public readonly componentInterfacesFolderName: string = 'interfaces';
+  public readonly extensionsFolderName: string = 'extensions';
 
   private readonly apisFolderName: string = 'api';
   private readonly commonFolderName: string = 'common';
   private readonly componentsFolderName: string = 'components';
-  private readonly extensionsFolderName: string = 'extensions';
 
   constructor(config: PluginConfig, strapiPaths: StrapiDirectories) {
     let useDefaultFolders: boolean = true;
     let destinationFolder: string = config.destinationFolder;
     if (destinationFolder) {
       destinationFolder = this.getFinalDestinationFolder(destinationFolder, strapiPaths);
+      config.destinationFolder = destinationFolder;
       this.commons = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.commonFolderName);
       this.apis = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.apisFolderName);
       this.components = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.componentsFolderName);
-      this.extensions = FileHelpers.ensureFolderPathExistRecursive(destinationFolder, this.extensionsFolderName);
       useDefaultFolders = false;
     }
 
     if (useDefaultFolders) {
       this.commons = FileHelpers.ensureFolderPathExistRecursive(strapiPaths.app.src, this.commonFolderName, config.commonInterfacesFolderName);
-      this.extensions = FileHelpers.ensureFolderPathExistRecursive(strapiPaths.app.src, this.extensionsFolderName);
     }
 
-    this.useForApisAndComponents = !!destinationFolder;
+    this.useCustomDestinationFolder = !!destinationFolder;
   }
 
   private getFinalDestinationFolder(destinationFolder: string, strapiPaths: StrapiDirectories) {
@@ -69,7 +68,7 @@ export class DestinationPaths {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is the same as the Strapi root`);
     }
 
-    if (destinationFolder=== strapiPaths.app.src) {
+    if (destinationFolder === strapiPaths.app.src) {
       throw new Error(`${pluginName} ⚠️  The given destinationFolder is the same as the Strapi src`);
     }
 

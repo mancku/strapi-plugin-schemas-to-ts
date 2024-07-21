@@ -35,10 +35,10 @@ export class Converter {
       return;
     }
 
-    const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.destinationPaths.commons, this.destinationPaths.extensions);
+    const commonSchemas: SchemaInfo[] = this.interfaceBuilder.generateCommonSchemas(this.destinationPaths.commons, this.strapiDirectories.app.extensions);
     const apiSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.api, SchemaSource.Api);
     const componentSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.components, SchemaSource.Component, apiSchemas);
-    const extensionSchemas: SchemaInfo[] = this.getSchemas(this.destinationPaths.extensions, SchemaSource.Extension);
+    const extensionSchemas: SchemaInfo[] = this.getSchemas(this.strapiDirectories.app.extensions, SchemaSource.Extension);
     this.adjustComponentsWhoseNamesWouldCollide(componentSchemas);
 
     const schemas: SchemaInfo[] = [...apiSchemas, ...componentSchemas, ...commonSchemas, ...extensionSchemas];
@@ -108,22 +108,25 @@ export class Converter {
     switch (schemaSource) {
       case SchemaSource.Api:
         schemaName = schema?.info.singularName;
-        folder = this.destinationPaths.useForApisAndComponents ? this.destinationPaths.apis : path.dirname(file);
+        folder = this.destinationPaths.useCustomDestinationFolder ? this.destinationPaths.apis : path.dirname(file);
         break;
       case SchemaSource.Common:
         schemaName = schema?.info.displayName;
         folder = this.destinationPaths.commons;
         break;
       case SchemaSource.Extension:
-        schemaName = `Full${schema?.info.displayName}`;
-        folder = this.destinationPaths.useForApisAndComponents ? this.destinationPaths.extensions : path.dirname(file);
+        if (schema?.info.displayName !== 'User') {
+          return;
+        }
+        folder = this.destinationPaths.commons;
+        schemaName = schema?.info.displayName;
         break;
       case SchemaSource.Component:
         let fileNameWithoutExtension = path.basename(file, path.extname(file));
         schemaName = fileNameWithoutExtension;
         folder = path.dirname(file);
         const componentFolder: string = path.basename(folder);
-        folder = this.destinationPaths.useForApisAndComponents
+        folder = this.destinationPaths.useCustomDestinationFolder
           ? FileHelpers.ensureFolderPathExistRecursive(this.destinationPaths.components, componentFolder)
           : FileHelpers.ensureFolderPathExistRecursive(folder, this.destinationPaths.componentInterfacesFolderName);
         break;
