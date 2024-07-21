@@ -115,13 +115,10 @@ export class Converter {
         folder = this.destinationPaths.commons;
         break;
       case SchemaSource.Extension:
-        if (schema?.info.displayName === 'User') {
-          folder = this.destinationPaths.commons;
-        } else {
-          folder = this.destinationPaths.useForApisAndComponents
-          ? FileHelpers.ensureFolderPathExistRecursive(this.config.destinationFolder, this.destinationPaths.extensionsFolderName)
-          : path.dirname(file);
+        if (schema?.info.displayName !== 'User') {
+          return;
         }
+        folder = this.destinationPaths.commons;
         schemaName = schema?.info.displayName;
         break;
       case SchemaSource.Component:
