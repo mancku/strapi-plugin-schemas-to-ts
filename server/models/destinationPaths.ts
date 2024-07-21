@@ -9,7 +9,7 @@ export class DestinationPaths {
   public apis?: string;
   public components?: string;
   public extensions?: string;
-  public readonly useForApisAndComponents: boolean;
+  public readonly useCustomDestinationFolder: boolean;
   public readonly componentInterfacesFolderName: string = 'interfaces';
   public readonly extensionsFolderName: string = 'extensions';
 
@@ -33,7 +33,7 @@ export class DestinationPaths {
       this.commons = FileHelpers.ensureFolderPathExistRecursive(strapiPaths.app.src, this.commonFolderName, config.commonInterfacesFolderName);
     }
 
-    this.useForApisAndComponents = !!destinationFolder;
+    this.useCustomDestinationFolder = !!destinationFolder;
   }
 
   private getFinalDestinationFolder(destinationFolder: string, strapiPaths: StrapiDirectories) {
